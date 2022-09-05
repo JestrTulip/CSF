@@ -10,18 +10,14 @@ static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // TODO: implement
-  this.whole = whole;
-  frac = 0;
-  assert(0);
-  return DUMMY;
+  Fixedpoint result = {whole, 0};
+  return result;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
   // TODO: implement
-  this.whole = whole;
-  this.frac = frac;
-  assert(0);
-  return DUMMY;
+  Fixedpoint result = {whole, frac}; 
+  return result;
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
