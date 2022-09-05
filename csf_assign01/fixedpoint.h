@@ -6,6 +6,7 @@
 typedef struct {
   uint64_t whole; 
   uint64_t frac; 
+  uint64_t tag; 
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
@@ -148,7 +149,7 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right);
 //
 // Returns:
 //   1 if val is a valid Fixedpoint value equal to 0;
-//   0 is val is not a valid Fixedpoint value equal to 0
+//   0 if val is not a valid Fixedpoint value equal to 0
 int fixedpoint_is_zero(Fixedpoint val);
 
 // Determine whether a Fixedpoint value is an "error" value resulting

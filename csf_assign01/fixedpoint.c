@@ -10,13 +10,13 @@ static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // TODO: implement
-  Fixedpoint result = {whole, 0};
+  Fixedpoint result = {whole, 0, 1};
   return result;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
   // TODO: implement
-  Fixedpoint result = {whole, frac}; 
+  Fixedpoint result = {whole, frac, 1}; 
   return result;
 }
 
@@ -28,13 +28,11 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
 uint64_t fixedpoint_whole_part(Fixedpoint val) {
   // TODO: implement
-  assert(0);
   return val.whole;
 }
 
 uint64_t fixedpoint_frac_part(Fixedpoint val) {
   // TODO: implement
-  assert(0);
   return val.frac;
 }
 
@@ -76,12 +74,10 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
 
 int fixedpoint_is_zero(Fixedpoint val) {
   // TODO: implement
-  if(val.whole == 0 && val.frac == 0){
-    assert(0);
+  if(val.whole == 0 && val.frac == 0 && tag){
     return 1;
     } else {
-    assert(0);
-    return 0;
+      return 0;
     }
 }
 
