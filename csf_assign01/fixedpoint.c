@@ -35,7 +35,7 @@ uint64_t fixedpoint_whole_part(Fixedpoint val) {
 uint64_t fixedpoint_frac_part(Fixedpoint val) {
   // TODO: implement
   assert(0);
-  return 0UL;
+  return val.frac;
 }
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
