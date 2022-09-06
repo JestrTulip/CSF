@@ -74,7 +74,7 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
 
 int fixedpoint_is_zero(Fixedpoint val) {
   // TODO: implement
-  if(val.whole == 0 && val.frac == 0 && tag){
+  if(val.whole == 0 && val.frac == 0 && val.tag){
     return 1;
     } else {
       return 0;
