@@ -6,6 +6,7 @@
 typedef struct {
   uint64_t whole; 
   uint64_t frac; 
+  uint64_t tag; 
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
