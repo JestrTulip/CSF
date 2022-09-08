@@ -9,19 +9,22 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  // TODO: implement
   Fixedpoint result = {whole, 0, 1};
   return result;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  // TODO: implement
   Fixedpoint result = {whole, frac, 1}; 
   return result;
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   // TODO: implement
+  char t_str[64]; 
+  strcpy(t_str, hex);
+  if (strtok(t_str, ".") == NULL) {
+    
+  }
   assert(0);
   return DUMMY;
 }
