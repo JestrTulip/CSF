@@ -30,7 +30,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
   strcpy(t_str, hex);
 
-  char *ptr = strtok(t_str, ".");
+  char *ptr = strtok(t_str, "."); //figure out how strtok works. 
   if (ptr == NULL) {
     if (strlen(hex) <= 17) {
       if (hex[0] == '-') { 
@@ -40,9 +40,15 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
     }
   }
   else if (ptr != NULL) { 
-    //check for negative and stuff
     strcpy(w_part, ptr);
-    whole = hex_to_int(w_part); 
+    if (w_part[0] == '-') {
+      tag = 0; 
+      char* w_neg = w_part + 1; 
+      whole = hex_to_int(w_neg);
+    }
+    else { 
+      whole = hex_to_int(w_part); 
+    }
     ptr = strtok(NULL, "."); 
     strcpy(f_part, ptr); 
     frac = hex_to_int(f_part); 
