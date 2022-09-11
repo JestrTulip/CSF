@@ -10,17 +10,17 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint result = {whole, 0, "1V"};
+  Fixedpoint result = {whole, 0, 0};
   return result;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint result = {whole, frac, "1V"}; 
+  Fixedpoint result = {whole, frac, 0}; 
   return result;
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
-  char* tag = ""; 
+  uint64_t tag = 0;
   uint64_t whole = 0;
   uint64_t frac = 0;
 
@@ -32,17 +32,17 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
   char *ptr = strtok(t_str, "."); 
 
-  if (ptr == NULL) { //case that there is no delimiter in the string
+  if (strcmp(hex, ptr) == 0) {//case that there is no delimiter in the string
     for (size_t i = 0; i < strlen(hex); i++) {
       if (i == 0) { 
         if (hex[i] != '-' || !(isalnum(hex[i]))) { 
-          tag = "1E"; 
+          tag = 2; 
           Fixedpoint result = {whole, frac, tag}; 
           return result; 
         }
       }
       else if (!(isalnum(hex[i]))) {
-        tag = "1E"; 
+        tag = 2; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
       }
@@ -50,13 +50,12 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
     if (strlen(hex) <= 17) {
       if (hex[0] == '-') { 
-        tag = 0;
-        char *s_neg = t_str + 1;
-        whole = hex_to_int(s_neg); 
+        tag = 1;
+        whole = hex_to_int(hex); 
       }
     }
     else if (strlen(hex) > 17) { 
-      tag = "1E";
+      tag = 2;
       Fixedpoint result = {whole, frac, tag}; 
       return result; 
     }
@@ -65,43 +64,58 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   else if (ptr != NULL) { // delimiter is present
     strcpy(w_part, ptr);
     
+    if(strlen(w_part) > 17) { 
+      tag = 2;
+      Fixedpoint result = {whole, frac, tag};
+      return result; 
+    } 
+    
     for (size_t i = 0; i < strlen(w_part); i++) { //check for invalid form 
       if (i == 0) { 
-        if (w_part[i] == '-' || !(isalnum(hex[i]))) { 
-          tag = "1E"; 
+        if (w_part[i] != '-' || !(isalnum(hex[i]))) { 
+          tag = 2; 
           Fixedpoint result = {whole, frac, tag}; 
           return result; 
         }
       }
 
       else if (!(isalnum(w_part[i]))) { 
-        tag = "1E"; 
+        tag = 2; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
       }
     }
 
     if (w_part[0] == '-') { 
-      tag = 0; 
+      tag = 1; 
       whole = hex_to_int(w_part);
     }
 
     ptr = strtok(NULL, "."); 
     strcpy(f_part, ptr); 
+    
+    if (strlen(f_part) > 16) { 
+      tag = 2; 
+      Fixedpoint result = {whole, frac, tag};
+    }
+    for (size_t i = 0; i < strlen(f_part); i++) {
+      if(!(isalnum(f_part[i]))) {
+        tag = 2; 
+        Fixedpoint result = {whole, frac, tag}; 
+      }
+    }
     frac = hex_to_int(f_part); 
   }
   
-  Fixedpoint result = {whole, frac, "1V"}; 
+  Fixedpoint result = {whole, frac, tag}; 
   return result;
 }
 
 uint64_t fixedpoint_whole_part(Fixedpoint val) {
-  // TODO: implement
   return val.whole;
 }
 
 uint64_t fixedpoint_frac_part(Fixedpoint val) {
-  // TODO: implement
   return val.frac;
 }
 
@@ -118,9 +132,18 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return DUMMY;
+  if(fixedpoint_is_zero(val)) { 
+    return val; 
+  }
+  else { 
+    if (val.tag == 0) {
+      val.tag = 1; 
+    }
+    if (val.tag == 1) { 
+      val.tag = 0;
+    }
+  }
+  return val;
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
@@ -130,9 +153,18 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return DUMMY;
+  uint64_t w_part = val.whole << 1;
+  uint64_t f_part = val.frac << 1;
+
+  if (w_part < val.whole) { 
+    val.tag = 2; 
+  }
+  if (f_part < val.frac) {
+    w_part++;
+  }
+  Fixedpoint result = {w_part, f_part, val.tag};
+  
+  return result;
 }
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
@@ -151,50 +183,51 @@ int fixedpoint_is_zero(Fixedpoint val) {
 }
 
 int fixedpoint_is_err(Fixedpoint val) {
-  if (val.tag[1] == 'E') { 
+  if (val.tag == 2) { 
     return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_neg(Fixedpoint val) {
-  if (val.tag[0] == '0' && val.tag[1] == 'V') { 
+  if (val.tag == 1) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_overflow_neg(Fixedpoint val) {
-  if (val.tag[0] == '0' && val.tag[1] == 'O') { 
+  if (val.tag == 6) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_overflow_pos(Fixedpoint val) {
-  if (val.tag[0] == '1' && val.tag[1] == 'O') {
+  if (val.tag == 5) {
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_underflow_neg(Fixedpoint val) {
-  if (val.tag[0] == '1' &&  val.tag[1] == 'U') { 
+  if (val.tag == 4) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_underflow_pos(Fixedpoint val) {
-  if (val.tag[1] == 'V') { 
+  if (val.tag == 3) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
+  if (val.tag == 0 || val.tag == 1) { 
+    return 1; 
+  }
   return 0;
 }
 
@@ -212,6 +245,10 @@ uint64_t hex_to_int(const char *hex) {
   int length = strlen(hex);
 
   for (int i = length--; i >= 0; i--) {
+
+    if (hex[i] == '-') { 
+      continue; 
+    }
 
     if (hex[i] >= '0' && hex[i] <= '9') { 
       decimal += (hex[i] - 48) * base; 
