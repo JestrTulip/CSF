@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+//tags: 0 for negative, 1 for positive,
+// E for error, U for underflow, O for overflow, V for valid
 typedef struct {
   uint64_t whole; 
   uint64_t frac; 
-  uint64_t tag; 
+  char* tag; 
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
