@@ -30,32 +30,68 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
   strcpy(t_str, hex);
 
-  char *ptr = strtok(t_str, "."); //figure out how strtok works. 
-  if (ptr == NULL) {
+  char *ptr = strtok(t_str, "."); 
+
+  if (ptr == NULL) { //case that there is no delimiter in the string
+    for (size_t i = 0; i < strlen(hex); i++) {
+      if (i == 0) { 
+        if (hex[i] != '-' || !(isalnum(hex[i]))) { 
+          tag = 3; 
+          Fixedpoint result = {whole, frac, tag}; 
+          return result; 
+        }
+      }
+      else if (!(isalnum(hex[i]))) {
+        tag = 3; 
+        Fixedpoint result = {whole, frac, tag}; 
+        return result; 
+      }
+    }
+
     if (strlen(hex) <= 17) {
       if (hex[0] == '-') { 
         tag = 0;
-        whole = hex_to_int(hex); 
+        char *s_neg = t_str + 1;
+        whole = hex_to_int(s_neg); 
       }
     }
+    else if (strlen(hex) > 17) { 
+      tag = 3;
+      Fixedpoint result = {whole, frac, tag}; 
+      return result; 
+    }
   }
-  else if (ptr != NULL) { 
+
+  else if (ptr != NULL) { // delimiter is present
     strcpy(w_part, ptr);
-    if (w_part[0] == '-') {
+    
+    for (size_t i = 0; i < strlen(w_part); i++) { //check for invalid form 
+      if (i == 0) { 
+        if (w_part[i] == '-' || !(isalnum(hex[i]))) { 
+          tag = 3; 
+          Fixedpoint result = {whole, frac, tag}; 
+          return result; 
+        }
+      }
+
+      else if (!(isalnum(w_part[i]))) { 
+        tag = 3; 
+        Fixedpoint result = {whole, frac, tag}; 
+        return result; 
+      }
+    }
+
+    if (w_part[0] == '-') { 
       tag = 0; 
-      char* w_neg = w_part + 1; 
-      whole = hex_to_int(w_neg);
+      whole = hex_to_int(w_part);
     }
-    else { 
-      whole = hex_to_int(w_part); 
-    }
+
     ptr = strtok(NULL, "."); 
     strcpy(f_part, ptr); 
     frac = hex_to_int(f_part); 
   }
   
   Fixedpoint result = {whole, frac, 1}; 
-  assert(0);
   return result;
 }
 
@@ -106,23 +142,25 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
 }
 
 int fixedpoint_is_zero(Fixedpoint val) {
-  // TODO: implement
   if(val.whole == 0 && val.frac == 0 && val.tag){
     return 1;
-    } else {
-      return 0;
-    }
+  } 
+  else {
+    return 0;
+  }
 }
 
 int fixedpoint_is_err(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
+  if (val.tag == 3) { 
+    return 1; 
+  }
   return 0;
 }
 
 int fixedpoint_is_neg(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
+  if (val.tag == 0) { 
+    return 1; 
+  }
   return 0;
 }
 
