@@ -157,8 +157,8 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 
 uint64_t len_counter(uint64_t value){
   uint64_t length=0;
-  while(value){ l++; value/=10; }
-  return l;
+  while(value){ length++; value/=10; }
+  return length;
 }
 
 uint64_t power(uint64_t base, uint64_t exp){
@@ -171,7 +171,6 @@ uint64_t power(uint64_t base, uint64_t exp){
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   // TODO: implement
-
 
   uint64_t left_len = length(left.frac);
   uint64_t right_len = length(right.frac);
