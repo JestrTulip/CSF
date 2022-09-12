@@ -10,22 +10,22 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint result = {whole, 0, 0};
+  Fixedpoint result = {whole, 0, 1};
   return result;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint result = {whole, frac, 0}; 
+  Fixedpoint result = {whole, frac, 1}; 
   return result;
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
-  uint64_t tag = 0;
+  int tag = 1;
   uint64_t whole = 0;
   uint64_t frac = 0;
 
   char w_part[64];
-  char f_part[64];
+  char f_part[64] = "";
   char t_str[64]; 
 
   strcpy(t_str, hex);
@@ -35,14 +35,17 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   if (strcmp(hex, ptr) == 0) {//case that there is no delimiter in the string
     for (size_t i = 0; i < strlen(hex); i++) {
       if (i == 0) { 
-        if (hex[i] != '-' || !(isalnum(hex[i]))) { 
-          tag = 2; 
-          Fixedpoint result = {whole, frac, tag}; 
-          return result; 
+        if (!(isalnum(hex[i]))) { 
+          if (w_part[i] != '-') { 
+            tag = 0; 
+            Fixedpoint result = {whole, frac, tag}; 
+            return result; 
+          }
+          
         }
       }
       else if (!(isalnum(hex[i]))) {
-        tag = 2; 
+        tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
       }
@@ -50,12 +53,12 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
 
     if (strlen(hex) <= 17) {
       if (hex[0] == '-') { 
-        tag = 1;
+        tag = -1;
         whole = hex_to_int(hex); 
       }
     }
     else if (strlen(hex) > 17) { 
-      tag = 2;
+      tag = 0;
       Fixedpoint result = {whole, frac, tag}; 
       return result; 
     }
@@ -65,43 +68,76 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
     strcpy(w_part, ptr);
     
     if(strlen(w_part) > 17) { 
-      tag = 2;
+      tag = 0;
       Fixedpoint result = {whole, frac, tag};
       return result; 
     } 
     
     for (size_t i = 0; i < strlen(w_part); i++) { //check for invalid form 
       if (i == 0) { 
-        if (w_part[i] != '-' || !(isalnum(hex[i]))) { 
-          tag = 2; 
-          Fixedpoint result = {whole, frac, tag}; 
-          return result; 
+        if (!(isalnum(hex[i]))) { 
+          if (w_part[i] != '-') { 
+            tag = 0; 
+            Fixedpoint result = {whole, frac, tag}; 
+            return result;
+          }
         }
       }
 
       else if (!(isalnum(w_part[i]))) { 
-        tag = 2; 
+        tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
       }
     }
 
     if (w_part[0] == '-') { 
-      tag = 1; 
+      tag = -1; 
       whole = hex_to_int(w_part);
     }
+
+    whole = hex_to_int(w_part);
 
     ptr = strtok(NULL, "."); 
     strcpy(f_part, ptr); 
     
     if (strlen(f_part) > 16) { 
-      tag = 2; 
+      tag = 0; 
       Fixedpoint result = {whole, frac, tag};
+      return result; 
     }
+
+    else if (strlen(f_part) < 16) { 
+      char hold[64] = ""; 
+
+      for (size_t i = 0; i < 16 - strlen(f_part); i++) {
+        hold[i] = '0'; 
+      }
+
+      char *fin_frac = malloc(17); 
+
+      strcpy(fin_frac, f_part); 
+      strcat(fin_frac, hold); 
+      fin_frac[17] = '\0'; 
+
+      for (size_t i = 0; i < strlen(fin_frac); i++) {
+        if(!(isalnum(fin_frac[i]))) {
+          tag = 0; 
+          Fixedpoint result = {whole, frac, tag}; 
+          return result; 
+        }
+      }
+      frac = hex_to_int(fin_frac); 
+      free(fin_frac);
+      Fixedpoint result = {whole, frac, tag}; 
+      return result;
+    }
+
     for (size_t i = 0; i < strlen(f_part); i++) {
       if(!(isalnum(f_part[i]))) {
-        tag = 2; 
+        tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
+        return result; 
       }
     }
     frac = hex_to_int(f_part); 
@@ -276,13 +312,11 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
   if(fixedpoint_is_zero(val)) { 
     return val; 
   }
-  else { 
-    if (val.tag == 0) {
-      val.tag = 1; 
-    }
-    if (val.tag == 1) { 
-      val.tag = 0;
-    }
+  else if (val.tag == 1) { 
+    val.tag = -1;  
+  }
+  else if (val.tag == -1) { 
+    val.tag = 1; 
   }
   return val;
 }
@@ -298,7 +332,12 @@ Fixedpoint fixedpoint_double(Fixedpoint val) {
   uint64_t f_part = val.frac << 1;
 
   if (w_part < val.whole) { 
-    val.tag = 2; 
+    if (val.tag == 1) { 
+      val.tag = 2; 
+    } 
+    else if (val.tag == -1) { 
+      val.tag = -2; 
+    }
   }
   if (f_part < val.frac) {
     w_part++;
@@ -315,7 +354,7 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
 }
 
 int fixedpoint_is_zero(Fixedpoint val) {
-  if(val.whole == 0 && val.frac == 0 && val.tag){
+  if(val.whole == 0 && val.frac == 0){
     return 1;
   } 
   else {
@@ -324,35 +363,35 @@ int fixedpoint_is_zero(Fixedpoint val) {
 }
 
 int fixedpoint_is_err(Fixedpoint val) {
-  if (val.tag == 2) { 
+  if (val.tag == 0) { 
     return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_neg(Fixedpoint val) {
-  if (val.tag == 1) { 
+  if (val.tag == -1) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_overflow_neg(Fixedpoint val) {
-  if (val.tag == 6) { 
+  if (val.tag == -2) { 
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_overflow_pos(Fixedpoint val) {
-  if (val.tag == 5) {
+  if (val.tag == 2) {
       return 1; 
   }
   return 0;
 }
 
 int fixedpoint_is_underflow_neg(Fixedpoint val) {
-  if (val.tag == 4) { 
+  if (val.tag == -3) { 
       return 1; 
   }
   return 0;
@@ -366,17 +405,57 @@ int fixedpoint_is_underflow_pos(Fixedpoint val) {
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
-  if (val.tag == 0 || val.tag == 1) { 
+  if (val.tag == -1 || val.tag == 1) { 
     return 1; 
   }
   return 0;
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  char *s = malloc(20);
-  strcpy(s, "<invalid>");
+
+  char *s = malloc(35);
+
+  size_t hold = 0;
+
+  if (fixedpoint_is_neg(val)) { 
+    s[0] = '-';
+
+    
+    if (val.frac == 0) { 
+      sprintf(s + 1, "%lx", val.whole); 
+    }
+    else { 
+      sprintf(s + 1, "%lx.%016lx", val.whole, val.frac); 
+      int len = strlen(s); 
+      for (size_t i = len - 1; i > 0; i--) { 
+        if (s[i] != '0') { 
+          hold = i; 
+          break;   
+        }
+      }
+      s[hold+1] = '\0'; 
+    }
+
+    return s; 
+  }
+
+
+  if (val.frac == 0) { 
+    sprintf(s, "%lx", val.whole); 
+  }
+  else { 
+    sprintf(s, "%lx.%016lx", val.whole, val.frac); 
+    int len = strlen(s); 
+    for (size_t i = len - 1; i > 0; i--) { 
+      if (s[i] != '0') { 
+        hold = i; 
+        break;
+      }
+    }
+    s[hold+1] = '\0'; 
+  }
+
+
   return s;
 }
 
