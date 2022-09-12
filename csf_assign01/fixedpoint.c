@@ -281,19 +281,21 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
 
     
     if (val.frac == 0) { 
-      sprintf(s, "%lx", val.whole); 
+      sprintf(s + 1, "%lx", val.whole); 
     }
     else { 
-      sprintf(s, "%lx.%016lx", val.whole, val.frac); 
+      sprintf(s + 1, "%lx.%016lx", val.whole, val.frac); 
       int len = strlen(s); 
       for (size_t i = len - 1; i > 0; i--) { 
         if (s[i] != '0') { 
           hold = i; 
-          i = 0;  
+          break;   
         }
       }
       s[hold+1] = '\0'; 
     }
+
+    return s; 
   }
 
 
@@ -303,9 +305,10 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   else { 
     sprintf(s, "%lx.%016lx", val.whole, val.frac); 
     int len = strlen(s); 
-    for (size_t i = len; i > 0; i--) { 
+    for (size_t i = len - 1; i > 0; i--) { 
       if (s[i] != '0') { 
         hold = i; 
+        break;
       }
     }
     s[hold+1] = '\0'; 
