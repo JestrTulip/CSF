@@ -2,12 +2,11 @@
 #define FIXEDPREC_H
 #include <stdint.h>
 
-// Tags: 0 for posValid, 1 for negValid, 2 for Error, 3 for Pos Underflow
-// 4 for Neg Underflow, 5 for Pos Overflow, 6 for Neg Overflow
+// Tags: +1=Pos, -1=Neg, +2=Pos Over, -2=Neg Over, +3=Pos Under, -3=Neg Under, 0=Error
 typedef struct {
   uint64_t whole; 
   uint64_t frac; 
-  uint64_t tag; 
+  int tag; 
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
