@@ -66,6 +66,25 @@ uint64_t fixedpoint_whole_part(Fixedpoint val);
 //   a uint64_t value which is the fractional part of the Fixedpoint value
 uint64_t fixedpoint_frac_part(Fixedpoint val);
 
+// Find the number of digits for a uint64_t value
+//
+// Parameters:
+//   value - a uint64_t value
+//
+// Returns:
+//   a uint64_t value which is the number of digits of the given parameter value
+uint64_t len_counter(uint64_t value);
+
+// Raise the power of a base to a certain exponent
+//
+// Parameters:
+//   base - a uint64_t value that is being raised to the power of exp
+//   exp - a uint64_t value that base is being raised to the power of
+//
+// Returns:
+//   a uint64_t with a value of base^exp
+uint64_t power(uint64_t base, uint64_t exp);
+
 // Compute the sum of two valid Fixedpoint values.
 //
 // Parameters:
