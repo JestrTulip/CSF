@@ -121,8 +121,8 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 
 uint64_t len_counter(uint64_t value){
   uint64_t length=0;
-  while(value){ l++; value/=10; }
-  return l;
+  while(value){ length++; value/=10; }
+  return length;
 }
 
 uint64_t power(uint64_t base, uint64_t exp){
@@ -137,8 +137,8 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   // TODO: implement
 
 
-  uint64_t left_len = length(left.frac);
-  uint64_t right_len = length(right.frac);
+  uint64_t left_len = len_counter(left.frac);
+  uint64_t right_len = len_counter(right.frac);
 
   // left and right fractional parts must have same number of places
   if (right_len >= left_len) {
@@ -162,16 +162,16 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 
     } else if(right.tag == 1 && left.tag == 1){
       frac_result = right.frac + left.frac;
-      int frac_result_len = length(frac_result);
+      int frac_result_len = len_counter(frac_result);
       if (frac_result_len > right_len || frac_result < right.frac){
         //check if works?
-        frac_result = frac_result - pow(10, frac_result_len-1);
+        frac_result = frac_result - power(10, frac_result_len-1);
         Fixedpoint whole_adjust = {1, 0, 1};
       }
 
     } else if(right.tag == -1 && left.tag == -1){
       frac_result = right.frac + left.frac;
-      int frac_result_len = length(frac_result);
+      int frac_result_len = len_counter(frac_result);
       if (frac_result_len > right_len || frac_result < right.frac){
         //check if works?
         frac_result = frac_result + power(10, frac_result_len-1);
@@ -189,7 +189,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 
     } else if(right.tag == 1 && left.tag == 1){
       frac_result = right.frac + left.frac;
-      int frac_result_len = length(frac_result);
+      int frac_result_len = len_counter(frac_result);
       if (frac_result_len > right_len || frac_result < left.frac){
         //check if works?
         frac_result = frac_result - power(10, frac_result_len-1);
@@ -198,7 +198,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 
     } else if(right.tag == -1 && left.tag == -1){
       frac_result = right.frac + left.frac;
-      int frac_result_len = length(frac_result)+1;
+      int frac_result_len = len_counter(frac_result)+1;
       if (frac_result_len > right_len || frac_result < left.frac){
         //check if works?
         frac_result = frac_result + power(10, frac_result_len-1);
