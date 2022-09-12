@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 #include "fixedpoint.h"
 
 // You can remove this once all of the functions are fully implemented
@@ -200,7 +201,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
       int frac_result_len = length(frac_result);
       if (frac_result_len > right_len || frac_result < right.frac){
         //check if works?
-        frac_result = frac_result - pow(10, frac_result_len-1);
+        frac_result = frac_result - power(10, frac_result_len-1);
         Fixedpoint whole_adjust = {1, 0, 1};
       }
 
