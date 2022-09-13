@@ -185,7 +185,6 @@ void test_add(TestObjs *objs) {
   (void) objs;
 
   Fixedpoint lhs, rhs, sum;
-
   lhs = fixedpoint_create_from_hex("-c7252a193ae07.7a51de9ea0538c5");
   rhs = fixedpoint_create_from_hex("d09079.1e6d601");
   sum = fixedpoint_add(lhs, rhs);
