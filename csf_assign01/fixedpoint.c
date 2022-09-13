@@ -20,6 +20,13 @@ Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
   return result;
 }
 
+int valid_hex(char c) { 
+  if ((c < '0' || c > '9') && (c < 'A' || c > 'F')) { 
+    return 1; 
+  }
+  return 0; 
+}
+
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   int tag = 1;
   uint64_t whole = 0;
@@ -34,9 +41,15 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   char *ptr = strtok(t_str, "."); 
 
   if (strcmp(hex, ptr) == 0) {//case that there is no delimiter in the string
+    if (strlen(ptr) > 16 && ptr[0] != '-') { 
+      tag = 0;
+      Fixedpoint result = {whole, frac, tag}; 
+      return result; 
+    }
+
     for (size_t i = 0; i < strlen(hex); i++) {
       if (i == 0) { 
-        if (!(isalnum(hex[i]))) { 
+        if (!(isxdigit(hex[i]))) { 
           if (w_part[i] != '-') { 
             tag = 0; 
             Fixedpoint result = {whole, frac, tag}; 
@@ -45,24 +58,19 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
           
         }
       }
-      else if (!(isalnum(hex[i]))) {
+      else if (!(isxdigit(hex[i]))) {
         tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
       }
     }
 
-    if (strlen(hex) <= 17) {
-      if (hex[0] == '-') { 
-        tag = -1;
-        whole = hex_to_int(hex); 
-      }
+    
+    if (hex[0] == '-') { 
+      tag = -1;
+      whole = hex_to_int(hex); 
     }
-    else if (strlen(hex) > 17) { 
-      tag = 0;
-      Fixedpoint result = {whole, frac, tag}; 
-      return result; 
-    }
+    
   }
 
   else if (ptr != NULL) { // delimiter is present
@@ -76,7 +84,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
     
     for (size_t i = 0; i < strlen(w_part); i++) { //check for invalid form 
       if (i == 0) { 
-        if (!(isalnum(hex[i]))) { 
+        if (!(isxdigit(hex[i]))) { 
           if (w_part[i] != '-') { 
             tag = 0; 
             Fixedpoint result = {whole, frac, tag}; 
@@ -85,7 +93,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
         }
       }
 
-      else if (!(isalnum(w_part[i]))) { 
+      else if (!(isxdigit(w_part[i]))) { 
         tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
@@ -122,7 +130,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
       fin_frac[17] = '\0'; 
 
       for (size_t i = 0; i < strlen(fin_frac); i++) {
-        if(!(isalnum(fin_frac[i]))) {
+        if(!(isxdigit(fin_frac[i]))) {
           tag = 0; 
           Fixedpoint result = {whole, frac, tag}; 
           return result; 
@@ -135,7 +143,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
     }
 
     for (size_t i = 0; i < strlen(f_part); i++) {
-      if(!(isalnum(f_part[i]))) {
+      if(!(isxdigit(f_part[i]))) {
         tag = 0; 
         Fixedpoint result = {whole, frac, tag}; 
         return result; 
@@ -156,19 +164,6 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   return val.frac;
 }
 
-uint64_t len_counter(uint64_t value){
-  uint64_t length=0;
-  while(value){ length++; value/=10; }
-  return length;
-}
-
-uint64_t power(uint64_t base, uint64_t exp){
-  if(exp == 1){
-    return base;
-  } else {
-    return power(base * base, exp - 1);
-  }
-}
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
  
