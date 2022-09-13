@@ -164,6 +164,19 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   return val.frac;
 }
 
+uint64_t len_counter(uint64_t value){
+  uint64_t length=0;
+  while(value){ length++; value/=10; }
+  return length;
+}
+
+uint64_t power(uint64_t base, uint64_t exp){
+  if(exp == 1){
+    return base;
+  } else {
+    return power(base * base, exp - 1);
+  }
+}
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
  
@@ -172,40 +185,6 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     uint64_t f_sum = left.frac + right.frac; 
     int fin_tag = left.tag;
 
-<<<<<<< HEAD
-  printf("reached1");
-  uint64_t left_len = len_counter(left.frac);
-  printf("reached");
-  uint64_t right_len = len_counter(right.frac);
-
-  // left and right fractional parts must have same number of places
-  if (right_len >= left_len) {
-    left.frac = power(10 , right_len - left_len) * left.frac;
-    left_len = right_len;
-  } else {
-    right.frac = power(10 , left_len - right_len) * right.frac;
-    right_len = left_len;
-  }
-  printf("reached");
-  //check if fractional result must be carried over to whole part if right is greater in magnitude
-  Fixedpoint whole_adjust = {0, 0, 1};
-  uint64_t frac_result;
-  if (right.frac >= left.frac) {
-    if(right.tag == -1 && left.tag == 1){
-      frac_result = power(10, right_len) - right.frac + left.frac;
-      Fixedpoint whole_adjust = {1, 0, -1};
-
-    } else if(right.tag == 1 && left.tag == -1){
-      frac_result = right.frac - left.frac;
-
-    } else if(right.tag == 1 && left.tag == 1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result);
-      if (frac_result_len > right_len || frac_result < right.frac){
-        //check if works?
-        frac_result = frac_result - power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, 1};
-=======
     if (f_sum < left.frac || f_sum < right.frac) { 
       w_sum++; 
     }
@@ -213,7 +192,6 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     else if ((w_sum < left.whole) || (w_sum < right.whole)) { 
       if (left.tag == 1) { 
         fin_tag = 2; 
->>>>>>> ec4038d36505b878decbe9edf5a4335b7e21779f
       }
       else if (left.tag == -1 ){ 
         fin_tag = -2; 
@@ -280,14 +258,14 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
   // TODO: implement
-  uint64_t frac_len = (val.frac==0) ? 1 : (uint64_t)log10(val.frac)+1;
+  uint64_t frac_len = len_counter(val.frac);
   uint64_t frac_adjust = 0;
   uint64_t whole_result;
   uint64_t frac_result;
   
   //carry over .5 to fractional part if whole part is odd
   if(val.whole % 2 != 0){
-    frac_adjust = 5 * pow(10, frac_len-1);
+    frac_adjust = 5 * power(10, frac_len-1);
   } 
   whole_result = val.whole / 2;
 
