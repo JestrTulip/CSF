@@ -173,8 +173,9 @@ uint64_t power(uint64_t base, uint64_t exp){
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   // TODO: implement
 
-
+  printf("reached1");
   uint64_t left_len = len_counter(left.frac);
+  printf("reached");
   uint64_t right_len = len_counter(right.frac);
 
   // left and right fractional parts must have same number of places
@@ -185,7 +186,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     right.frac = power(10 , left_len - right_len) * right.frac;
     right_len = left_len;
   }
-
+  printf("reached");
   //check if fractional result must be carried over to whole part if right is greater in magnitude
   Fixedpoint whole_adjust = {0, 0, 1};
   uint64_t frac_result;
@@ -324,8 +325,29 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
   // TODO: implement
-  assert(0);
-  return DUMMY;
+  uint64_t frac_len = (val.frac==0) ? 1 : (uint64_t)log10(val.frac)+1;
+  uint64_t frac_adjust = 0;
+  uint64_t whole_result;
+  uint64_t frac_result;
+  
+  //carry over .5 to fractional part if whole part is odd
+  if(val.whole % 2 != 0){
+    frac_adjust = 5 * pow(10, frac_len-1);
+  } 
+  whole_result = val.whole / 2;
+
+  if(val.frac % 2 != 0){
+    frac_result = (val.frac / 2) * 10 + 5;
+    if (frac_result < val.frac){
+      //overflow has occured not sure how to signal it
+    }
+  } else {
+    frac_result = val.frac / 2;
+  }
+
+  Fixedpoint temp = {0, frac_adjust, val.tag};
+  Fixedpoint result = {whole_result, frac_result, val.tag};
+  return fixedpoint_add(result, temp);
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
@@ -350,7 +372,17 @@ Fixedpoint fixedpoint_double(Fixedpoint val) {
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
   // TODO: implement
-  assert(0);
+  if(left.tag == 1 && right.tag == 1){
+    Fixedpoint temp = fixedpoint_sub(left, right);
+    return (fixedpoint_is_zero(temp)) ? 0 : temp.tag;
+  } else if(left.tag == -1 && right.tag == -1){
+    Fixedpoint temp = fixedpoint_sub(left, right);
+    return (fixedpoint_is_zero(temp)) ? 0 : temp.tag * -1;
+  } else if(left.tag == -1 && right.tag == 1){
+    return -1;
+  } else if(left.tag == 1 && right.tag == -1){
+    return 1;
+  }
   return 0;
 }
 
