@@ -68,7 +68,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   else if (ptr != NULL) { // delimiter is present
     strcpy(w_part, ptr);
     
-    if(strlen(w_part) > 17) { 
+    if(strlen(w_part) > 16 && w_part[0] != '-') { 
       tag = 0;
       Fixedpoint result = {whole, frac, tag};
       return result; 
@@ -171,142 +171,68 @@ uint64_t power(uint64_t base, uint64_t exp){
 }
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  // TODO: implement
+ 
+  if (left.tag == right.tag) { 
+    uint64_t w_sum = left.whole + right.whole; 
+    uint64_t f_sum = left.frac + right.frac; 
+    int fin_tag = left.tag;
 
-
-  uint64_t left_len = len_counter(left.frac);
-  uint64_t right_len = len_counter(right.frac);
-
-  // left and right fractional parts must have same number of places
-  if (right_len >= left_len) {
-    left.frac = power(10 , right_len - left_len) * left.frac;
-    left_len = right_len;
-  } else {
-    right.frac = power(10 , left_len - right_len) * right.frac;
-    right_len = left_len;
-  }
-
-  //check if fractional result must be carried over to whole part if right is greater in magnitude
-  Fixedpoint whole_adjust = {0, 0, 1};
-  uint64_t frac_result;
-  if (right.frac >= left.frac) {
-    if(right.tag == -1 && left.tag == 1){
-      frac_result = power(10, right_len) - right.frac + left.frac;
-      Fixedpoint whole_adjust = {1, 0, -1};
-
-    } else if(right.tag == 1 && left.tag == -1){
-      frac_result = right.frac - left.frac;
-
-    } else if(right.tag == 1 && left.tag == 1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result);
-      if (frac_result_len > right_len || frac_result < right.frac){
-        //check if works?
-        frac_result = frac_result - power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, 1};
+    if (f_sum < left.frac || f_sum < right.frac) { 
+      w_sum++; 
+    }
+    
+    else if ((w_sum < left.whole) || (w_sum < right.whole)) { 
+      if (left.tag == 1) { 
+        fin_tag = 2; 
       }
-
-    } else if(right.tag == -1 && left.tag == -1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result);
-      if (frac_result_len > right_len || frac_result < right.frac){
-        //check if works?
-        frac_result = frac_result + power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, -1};
+      else if (left.tag == -1 ){ 
+        fin_tag = -2; 
       }
     }
-  //check if fractional result must be carried over to whole part if left is greater in magnitude
-  } else {
-    if(right.tag == -1 && left.tag == 1){
-      frac_result = power(10, left_len) - left.frac + right.frac;
-      Fixedpoint whole_adjust = {1, 0, -1};
+    Fixedpoint result = {w_sum, f_sum, fin_tag};
 
-    } else if(right.tag == 1 && left.tag == -1){
-      frac_result = left.frac - right.frac;
-
-    } else if(right.tag == 1 && left.tag == 1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result);
-      if (frac_result_len > right_len || frac_result < left.frac){
-        //check if works?
-        frac_result = frac_result - power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, 1};
-      }
-
-    } else if(right.tag == -1 && left.tag == -1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result)+1;
-      if (frac_result_len > right_len || frac_result < left.frac){
-        //check if works?
-        frac_result = frac_result + power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, 1};
-      }
-    }
+    return result;  
   }
+  else if (left.whole > right.whole || (left.whole == right.whole && left.frac > right.frac)){ //left bigger
+    int fin_tag = left.tag; 
+    uint64_t w_sum = left.whole - right.whole; 
+    uint64_t f_sum = left.frac - right.frac; 
+
+    Fixedpoint result = {w_sum, f_sum, fin_tag}; 
 
   
-
-  //check if whole part overflows
-  int tag;
-  uint64_t whole_result;
-  if (right.whole > left.whole) {
-    if(right.tag == -1 && left.tag == 1){
-      whole_result = power(10, right_len) - right.whole + left.whole;
-      tag = -1;
-
-    } else if(right.tag == 1 && left.tag == -1){
-      whole_result = right.whole - left.whole;
-      tag = 1;
-
-    } else if(right.tag == 1 && left.tag == 1){
-      whole_result = right.whole + left.whole;
-      //checking for positive overflow
-      if (whole_result < left.whole){
-        tag = 2;
-      }
-
-    } else if(right.tag == -1 && left.tag == -1){
-      whole_result = right.frac + left.frac;
-      //checking for negative overflow
-      if (whole_result < left.whole){
-        tag = -2;
-      }
+    if (right.frac > left.frac && left.whole != right.whole) { 
+      w_sum--; 
+      f_sum++; 
+      result.frac = f_sum; 
+      result.whole = w_sum; 
     }
-  } else {
-    if(right.tag == -1 && left.tag == 1){
-      whole_result = power(10, left_len) - left.whole + right.whole;
-      tag = -1;
+    return result; 
+  }
+  else { 
+    int fin_tag = right.tag; 
+    uint64_t w_res = right.whole - left.whole; 
+    uint64_t f_res = right.frac - left.frac;
 
-    } else if(right.tag == 1 && left.tag == -1){
-      whole_result = left.whole - right.whole;
-      tag = 1;
+    Fixedpoint result = {w_res, f_res, fin_tag}; 
 
-    } else if(right.tag == 1 && left.tag == 1){
-      whole_result = right.whole + left.whole;
-      if (whole_result < left.whole){
-        tag = 2;
-      }
-
-    } else if(right.tag == -1 && left.tag == -1){
-      whole_result = right.frac + left.frac;
-      if (whole_result < left.whole){
-        tag = -2;
-      }
+    if (left.frac > right.frac && left.whole != right.whole) { 
+      w_res--;
+      f_res++; 
+      result.frac = f_res; 
+      result.whole = w_res; 
     }
+
+    return result; 
   }
 
-  
-  Fixedpoint result = {whole_result, frac_result, tag};
-  if (whole_adjust.whole!=0){
-    return fixedpoint_add(result, whole_adjust);
-  }
+  Fixedpoint result = {0,0,1}; 
   return result;
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
-  // TODO: implement
-  right.tag = right.tag * (-1);
-  return fixedpoint_add(left, right);
+  
+  return fixedpoint_add(left, fixedpoint_negate(right));
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
