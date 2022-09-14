@@ -115,19 +115,7 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   return val.frac;
 }
 
-uint64_t len_counter(uint64_t value){
-  uint64_t length=0;
-  while(value){ length++; value/=10; }
-  return length;
-}
 
-uint64_t power(uint64_t base, uint64_t exp){
-  if(exp == 1){
-    return base;
-  } else {
-    return power(base * base, exp - 1);
-  }
-}
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
  
