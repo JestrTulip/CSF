@@ -254,6 +254,6 @@ int fixedpoint_is_valid(Fixedpoint val);
 //   of the Fixedpoint value
 char *fixedpoint_format_as_hex(Fixedpoint val);
 
-uint64_t hex_to_int(const char *hex); 
+
 
 #endif // FIXEDPREC_H

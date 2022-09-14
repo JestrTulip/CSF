@@ -290,29 +290,28 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
 
   if (left.whole == right.whole) {
     if (left.frac > right.frac) { 
-      if (left.tag == -1) {
-        return -1; 
-      } else { 
+      if (left.tag == 1) {
         return 1; 
+      } else { 
+        return -1; 
       }
     }
     else if (left.frac < right.frac) {
-      if (left.tag == -1) {
-        return 1; 
-      } else { 
+      if (left.tag == 1) {
         return -1; 
+      } else { 
+        return 1; 
       }
     } else { return 0; }
   } else if (left.whole > right.whole) {
-    if (left.tag == -1) { return -1; }
-    else { return 1; }
-  } else { 
-    if (left.tag == -1) { 
-      return 1;
-    }
+    if (left.tag == 1) { return 1; }
     else { return -1; }
+  } else { 
+    if (left.tag == 1) { 
+      return -1;
+    }
+    else { return 1; }
   }
-
   return 0;
 }
 
@@ -422,31 +421,3 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   return s;
 }
 
-uint64_t hex_to_int(const char *hex) {
-  uint64_t decimal = 0, base = 1; 
-  
-  int length = strlen(hex);
-
-  for (int i = length--; i >= 0; i--) {
-
-    if (hex[i] == '-') { 
-      continue; 
-    }
-
-    if (hex[i] >= '0' && hex[i] <= '9') { 
-      decimal += (hex[i] - 48) * base; 
-      base *= 16; 
-    }
-    else if (hex[i] >= 'A' && hex[i] <= 'F') { 
-      decimal += (hex[i] - 55) * base; 
-      base *= 16; 
-    }
-    else if (hex[i] >= 'a' && hex[i] <= 'f') { 
-      decimal += (hex[i] - 87) * base;
-      base *= 16; 
-    }
-  }
-
-  return decimal;
-
-}
