@@ -8,7 +8,6 @@
 #include "fixedpoint.h"
 
 // You can remove this once all of the functions are fully implemented
-static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   Fixedpoint result = {whole, 0, 1};
@@ -27,134 +26,86 @@ int valid_hex(char c) {
   return 0; 
 }
 
+void add_padding(char* str) { 
+  size_t len = strlen(str);
+
+  for (size_t i = len; i < 16; i++) {
+    str[i] = '0'; 
+  }
+  str[17] = '\0';
+
+}
+
+int string_is_valid_hex(char* str) {
+  size_t len = strlen(str);
+
+  for (size_t i = 0; i < len; i++) {
+    if (!(isxdigit(str[i]))) {
+      return 0; 
+    }
+  }
+  return 1; 
+}
+
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   int tag = 1;
   uint64_t whole = 0;
   uint64_t frac = 0;
 
-  char w_part[64];
-  char f_part[64] = "";
-  char t_str[64]; 
+  char w_part[17] = {0};
+  char f_part[17] = {0};
 
-  strcpy(t_str, hex);
-
-  char *ptr = strtok(t_str, "."); 
-
-  if (strcmp(hex, ptr) == 0) {//case that there is no delimiter in the string
-    if (strlen(ptr) > 16 && ptr[0] != '-') { 
-      tag = 0;
-      Fixedpoint result = {whole, frac, tag}; 
-      return result; 
-    }
-
-    for (size_t i = 0; i < strlen(hex); i++) {
-      if (i == 0) { 
-        if (!(isxdigit(hex[i]))) { 
-          if (w_part[i] != '-') { 
-            tag = 0; 
-            Fixedpoint result = {whole, frac, tag}; 
-            return result; 
-          }
-          
-        }
-      }
-      else if (!(isxdigit(hex[i]))) {
-        tag = 0; 
-        Fixedpoint result = {whole, frac, tag}; 
-        return result; 
-      }
-    }
-
-    
-    if (hex[0] == '-') { 
-      tag = -1;
-      whole = hex_to_int(hex); 
-    }
-    
+  if(hex[0] == '-'){
+    tag = -1;
+    hex++;
   }
 
-  else if (ptr != NULL) { // delimiter is present
-    strcpy(w_part, ptr);
-    
-    if(strlen(w_part) > 16 && w_part[0] != '-') { 
-      tag = 0;
-      Fixedpoint result = {whole, frac, tag};
-      return result; 
-    } 
-    
-    for (size_t i = 0; i < strlen(w_part); i++) { //check for invalid form 
-      if (i == 0) { 
-        if (!(isxdigit(hex[i]))) { 
-          if (w_part[i] != '-') { 
-            tag = 0; 
-            Fixedpoint result = {whole, frac, tag}; 
-            return result;
-          }
-        }
-      }
+  if(strlen(hex)>33){
+    Fixedpoint result = {0,0,0};
+    return result;
+  }
 
-      else if (!(isxdigit(w_part[i]))) { 
-        tag = 0; 
-        Fixedpoint result = {whole, frac, tag}; 
-        return result; 
-      }
+  int passed_point = 0;
+  int w_inc = 0;
+  int f_inc = 0;
+
+  for(size_t i = 0; i < strlen(hex); ++i){
+    if (hex[i] == '.') { 
+      passed_point++; 
+      i++; 
+      w_inc--;
+    }
+    if (hex[i] == '\0') { 
+      break; 
     }
 
-    if (w_part[0] == '-') { 
-      tag = -1; 
-      whole = hex_to_int(w_part);
-    }
-
-    whole = hex_to_int(w_part);
-
-    ptr = strtok(NULL, "."); 
-    strcpy(f_part, ptr); 
-    
-    if (strlen(f_part) > 16) { 
-      tag = 0; 
-      Fixedpoint result = {whole, frac, tag};
-      return result; 
-    }
-
-    else if (strlen(f_part) < 16) { 
-      char hold[64] = ""; 
-
-      for (size_t i = 0; i < 16 - strlen(f_part); i++) {
-        hold[i] = '0'; 
-      }
-
-      char *fin_frac = malloc(17); 
-
-      strcpy(fin_frac, f_part); 
-      strcat(fin_frac, hold); 
-      fin_frac[17] = '\0'; 
-
-      for (size_t i = 0; i < strlen(fin_frac); i++) {
-        if(!(isxdigit(fin_frac[i]))) {
-          tag = 0; 
-          Fixedpoint result = {whole, frac, tag}; 
-          return result; 
-        }
-      }
-      frac = hex_to_int(fin_frac); 
-      free(fin_frac);
-      Fixedpoint result = {whole, frac, tag}; 
+    if((hex[i] != '.' && !isxdigit(hex[i])) || passed_point > 1 ||w_inc > 15 || f_inc > 15){
+      Fixedpoint result = {0,0,0};
       return result;
     }
 
-    for (size_t i = 0; i < strlen(f_part); i++) {
-      if(!(isxdigit(f_part[i]))) {
-        tag = 0; 
-        Fixedpoint result = {whole, frac, tag}; 
-        return result; 
-      }
+    if(!passed_point){
+      w_part[w_inc] = hex[i];
+      w_inc++;
+    } else {
+      f_part[f_inc] = hex[i];
+      f_inc++;
     }
-    frac = hex_to_int(f_part); 
   }
-  
-  Fixedpoint result = {whole, frac, tag}; 
+
+  add_padding(f_part);
+
+  whole = strtoul(w_part, NULL, 16);
+  frac = strtoul(f_part, NULL, 16); 
+
+  Fixedpoint result = {whole, frac, tag};
   return result;
+
 }
+  
+
+
+
 
 uint64_t fixedpoint_whole_part(Fixedpoint val) {
   return val.whole;
@@ -172,48 +123,21 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     uint64_t f_sum = left.frac + right.frac; 
     int fin_tag = left.tag;
 
-<<<<<<< HEAD
-  printf("reached1");
-  uint64_t left_len = len_counter(left.frac);
-  printf("reached");
-  uint64_t right_len = len_counter(right.frac);
-
-  // left and right fractional parts must have same number of places
-  if (right_len >= left_len) {
-    left.frac = power(10 , right_len - left_len) * left.frac;
-    left_len = right_len;
-  } else {
-    right.frac = power(10 , left_len - right_len) * right.frac;
-    right_len = left_len;
-  }
-  printf("reached");
-  //check if fractional result must be carried over to whole part if right is greater in magnitude
-  Fixedpoint whole_adjust = {0, 0, 1};
-  uint64_t frac_result;
-  if (right.frac >= left.frac) {
-    if(right.tag == -1 && left.tag == 1){
-      frac_result = power(10, right_len) - right.frac + left.frac;
-      Fixedpoint whole_adjust = {1, 0, -1};
-
-    } else if(right.tag == 1 && left.tag == -1){
-      frac_result = right.frac - left.frac;
-
-    } else if(right.tag == 1 && left.tag == 1){
-      frac_result = right.frac + left.frac;
-      int frac_result_len = len_counter(frac_result);
-      if (frac_result_len > right_len || frac_result < right.frac){
-        //check if works?
-        frac_result = frac_result - power(10, frac_result_len-1);
-        Fixedpoint whole_adjust = {1, 0, 1};
-=======
-    if (f_sum < left.frac || f_sum < right.frac) { 
+    if (f_sum < left.frac) { 
       w_sum++; 
+      if (w_sum == left.whole && w_sum == right.whole) {
+        if (left.tag == 1) { 
+        fin_tag = 2; 
+        }
+        else if (left.tag == -1 ){ 
+        fin_tag = -2; 
+        }
+      }
     }
     
-    else if ((w_sum < left.whole) || (w_sum < right.whole)) { 
+    if ((w_sum < left.whole) || (w_sum < right.whole)) { 
       if (left.tag == 1) { 
         fin_tag = 2; 
->>>>>>> ec4038d36505b878decbe9edf5a4335b7e21779f
       }
       else if (left.tag == -1 ){ 
         fin_tag = -2; 
@@ -230,12 +154,24 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 
     Fixedpoint result = {w_sum, f_sum, fin_tag}; 
 
+    if(fixedpoint_is_zero(result)) { 
+      result.tag = 1; 
+    }
   
     if (right.frac > left.frac && left.whole != right.whole) { 
       w_sum--; 
-      f_sum++; 
-      result.frac = f_sum; 
+      //f_sum++; 
+      //result.frac = f_sum; 
       result.whole = w_sum; 
+    }
+
+    if (w_sum > left.whole) { 
+      if (left.tag == 1) { 
+        fin_tag = 2; 
+      }
+      else if (left.tag == -1 ){ 
+        fin_tag = -2; 
+      }
     }
     return result; 
   }
@@ -244,13 +180,26 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     uint64_t w_res = right.whole - left.whole; 
     uint64_t f_res = right.frac - left.frac;
 
-    Fixedpoint result = {w_res, f_res, fin_tag}; 
+    Fixedpoint result = {w_res, f_res, fin_tag};
+
+    if(fixedpoint_is_zero(result)) {
+      result.tag = 1; 
+    }
 
     if (left.frac > right.frac && left.whole != right.whole) { 
       w_res--;
-      f_res++; 
-      result.frac = f_res; 
+      //f_res++; 
+      //result.frac = f_res; 
       result.whole = w_res; 
+    }
+
+    if (w_res > right.whole) { 
+      if (left.tag == 1) { 
+        fin_tag = 2; 
+      }
+      else if (left.tag == -1 ){ 
+        fin_tag = -2; 
+      }
     }
 
     return result; 
@@ -261,7 +210,6 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
-  
   return fixedpoint_add(left, fixedpoint_negate(right));
 }
 
@@ -279,30 +227,24 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
-  // TODO: implement
-  uint64_t frac_len = (val.frac==0) ? 1 : (uint64_t)log10(val.frac)+1;
-  uint64_t frac_adjust = 0;
-  uint64_t whole_result;
-  uint64_t frac_result;
-  
-  //carry over .5 to fractional part if whole part is odd
-  if(val.whole % 2 != 0){
-    frac_adjust = 5 * pow(10, frac_len-1);
-  } 
-  whole_result = val.whole / 2;
+  uint64_t w_part = val.whole >> 1;
+  uint64_t f_part = val.frac >> 1;
 
-  if(val.frac % 2 != 0){
-    frac_result = (val.frac / 2) * 10 + 5;
-    if (frac_result < val.frac){
-      //overflow has occured not sure how to signal it
-    }
-  } else {
-    frac_result = val.frac / 2;
+  if (val.whole % 2) { 
+    f_part += 0x8000000000000000UL; 
   }
 
-  Fixedpoint temp = {0, frac_adjust, val.tag};
-  Fixedpoint result = {whole_result, frac_result, val.tag};
-  return fixedpoint_add(result, temp);
+  if (val.frac % 2) {
+     if (val.tag == 1) { 
+      val.tag = 3; 
+    } 
+    else if (val.tag == -1) { 
+      val.tag = -3; 
+    }
+  }
+
+  Fixedpoint result = {w_part, f_part, val.tag}; 
+  return result; 
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
@@ -326,18 +268,38 @@ Fixedpoint fixedpoint_double(Fixedpoint val) {
 }
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
-  // TODO: implement
-  if(left.tag == 1 && right.tag == 1){
-    Fixedpoint temp = fixedpoint_sub(left, right);
-    return (fixedpoint_is_zero(temp)) ? 0 : temp.tag;
-  } else if(left.tag == -1 && right.tag == -1){
-    Fixedpoint temp = fixedpoint_sub(left, right);
-    return (fixedpoint_is_zero(temp)) ? 0 : temp.tag * -1;
-  } else if(left.tag == -1 && right.tag == 1){
-    return -1;
-  } else if(left.tag == 1 && right.tag == -1){
-    return 1;
+  if (left.tag == 1 && right.tag == -1) { 
+    return 1; 
   }
+  else if(left.tag == -1 && right.tag == 1) {
+    return -1; 
+  }
+
+  if (left.whole == right.whole) {
+    if (left.frac > right.frac) { 
+      if (left.tag == -1) {
+        return -1; 
+      } else { 
+        return 1; 
+      }
+    }
+    else if (left.frac < right.frac) {
+      if (left.tag == -1) {
+        return 1; 
+      } else { 
+        return -1; 
+      }
+    } else { return 0; }
+  } else if (left.whole > right.whole) {
+    if (left.tag == -1) { return -1; }
+    else { return 1; }
+  } else { 
+    if (left.tag == -1) { 
+      return 1;
+    }
+    else { return -1; }
+  }
+
   return 0;
 }
 
