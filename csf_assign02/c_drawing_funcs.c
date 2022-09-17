@@ -51,18 +51,17 @@ uint8_t get_a(uint32_t color){
   uint8_t r = (color >> 0) & 0xFF; 
   return r;
 }
-uint32_t blend_components(uint32_t fg, uint32_t bg, uint8_t alpha){
-  uint32_t red = (alpha * get_r(fg) + (255 - alpha) * get_r(bg)) / 255;
-  uint32_t green = (alpha * get_g(fg) + (255 - alpha) * get_g(bg)) / 255;
-  uint32_t blue = (alpha * get_b(fg) + (255 - alpha) * get_b(bg)) / 255;
-  uint32_t result = alpha;
-  return (((((alpha << 8) + blue) << 8) + green) << 8) + red;
+uint8_t blend_components(uint32_t fg, uint32_t bg, uint8_t alpha){
+  return (alpha * fg + (255 - alpha) * bg) / 255;
 }
 uint32_t blend_colors(uint32_t fg, uint32_t bg){
-  return blend_components(fg, bg, get_a(fg));
+  uint32_t red = blend_components(get_r(fg), get_r(bg), get_a(fg))
+  uint32_t red = blend_components(get_r(fg), get_r(bg), get_a(fg))
+  uint32_t red = blend_components(get_r(fg), get_r(bg), get_a(fg))
+  return (((((alpha << 8) | blue) << 8) | green) << 8) | red;
 }
 void set_pixel(struct Image *img, uint32_t index, uint32_t color){
-  
+  blend_colors(color, img[index]);
 }
 int64_t square(int64_t x){
   return x * x;
@@ -96,7 +95,10 @@ int64_t square_dist(int64_t x1, int64_t y1, int64_t x2, int64_t y2){
 //   color - uint32_t color value
 //
 void draw_pixel(struct Image *img, int32_t x, int32_t y, uint32_t color) {
-  // TODO: implement
+  
+  if(!in_bounds(img, x, y)){ return;}
+
+  set_pixel(img, compute_index(img, x, y), color);
 }
 
 //
@@ -112,7 +114,11 @@ void draw_pixel(struct Image *img, int32_t x, int32_t y, uint32_t color) {
 void draw_rect(struct Image *img,
                const struct Rect *rect,
                uint32_t color) {
-  // TODO: implement
+  for(int i = 0; i < img->width; i++){
+    for(int j = 0; j < img->height; j++){
+      draw_pixel(img, clamp(i, rect->x, rect->x + rect->width), clamp(j, rect->y, rect->y + rect->width), color);
+    }
+  }
 }
 
 //
@@ -129,8 +135,11 @@ void draw_rect(struct Image *img,
 void draw_circle(struct Image *img,
                  int32_t x, int32_t y, int32_t r,
                  uint32_t color) {
-  // TODO: implement
-}
+  for(int i = 0; i < img->width; i++){
+    for(int j = 0; j < img->height; j++){
+      draw_pixel(img, clamp(square_dist(i, x), 0, square(r)), clamp(square_dist(j, y), 0, square(r)), color);
+    }
+  }
 
 //
 // Draw a tile by copying all pixels in the region
@@ -150,7 +159,19 @@ void draw_tile(struct Image *img,
                int32_t x, int32_t y,
                struct Image *tilemap,
                const struct Rect *tile) {
- // TODO: implement
+ if(!in_bounds(tilemap, tile->x, tile->y) || 
+    !in_bounds(tilemap, tile->x, tile->y + tile->height) || 
+    !in_bounds(tilemap, tile->x + tile->width, tile->y) || 
+    !in_bounds(tilemap, tile->x + tile->width, tile->y + tile->height)){
+    return;
+  }
+  for(int i = 0; i < tile->width; ++i){
+    for(int j = 0; j < tile->height; ++j){
+      if(in_bounds(img, i, j)){
+        color = tilemap[compute_index(tilemap, i + tile->x, j + tile->y)]
+        img[compute_index(img, i + x, j + y)] = color;
+      }
+  }
 }
 
 //
@@ -172,5 +193,15 @@ void draw_sprite(struct Image *img,
                  int32_t x, int32_t y,
                  struct Image *spritemap,
                  const struct Rect *sprite) {
-  // TODO: implement
+  if(!in_bounds(spritemap, sprite->x, sprite->y) || 
+    !in_bounds(spritemap, sprite->x, sprite->y + sprite->height) || 
+    !in_bounds(spritemap, sprite->x + sprite->width, sprite->y) || 
+    !in_bounds(spritemap, sprite->x + sprite->width, sprite->y + sprite->height)){
+    return;
+  }
+  for(int i = 0; i < sprite->width; ++i){
+    for(int j = 0; j < sprite->height; ++j){
+      draw_pixel(img, i + x, j + y, spritemap[compute_index(spritemap, i + sprite->x, j + sprite->y)]);
+    }
+  }
 }
