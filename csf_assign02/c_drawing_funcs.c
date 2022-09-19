@@ -203,7 +203,7 @@ void draw_sprite(struct Image *img,
     return;
   }
   for(int i = 0; i < sprite->width; ++i){
-    for(int j = 0; j < sprite->height; ++j){
+    for(int j = 0; j < sprite->height; ++j){  
       draw_pixel(img, i + x, j + y, spritemap->data[compute_index(spritemap, i + sprite->x, j + sprite->y)]);
     }
   }
