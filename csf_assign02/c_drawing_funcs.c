@@ -23,24 +23,17 @@ uint32_t compute_index(struct Image *img, int32_t x, int32_t y){
 }
 
 int32_t clamp(int32_t val, int32_t min, int32_t max){
-  int32_t min_diff = abs(min - val);
-  int32_t max_diff = abs(max - val); 
-
-  if (min_diff < max_diff) { 
-    val = min; 
-    return val; 
-  } else { 
-    val = max; 
-  }
-  return val; 
-} 
+  if(val < min){ return min;}
+  if(val > max){ return max;}
+  return val;
+}
 
 uint8_t get_r(uint32_t color){
-  uint32_t r = (color >> 24) & 0xFF; 
+  uint8_t r = (color >> 24) & 0xFF; 
   return r;
 }
 uint8_t get_g(uint32_t color){
-  uint32_t r = (color >> 16) & 0xFF; 
+  uint8_t r = (color >> 16) & 0xFF; 
   return r;
 }
 uint8_t get_b(uint32_t color){
@@ -51,21 +44,26 @@ uint8_t get_a(uint32_t color){
   uint8_t r = (color >> 0) & 0xFF; 
   return r;
 }
+
 uint8_t blend_components(uint32_t fg, uint32_t bg, uint8_t alpha){
   return (alpha * fg + (255 - alpha) * bg) / 255;
 }
+
 uint32_t blend_colors(uint32_t fg, uint32_t bg){
   uint32_t red = blend_components(get_r(fg), get_r(bg), get_a(fg));
   uint32_t blue = blend_components(get_b(fg), get_b(bg), get_a(fg));
   uint32_t green = blend_components(get_g(fg), get_g(bg), get_a(fg));
-  return (((((256 << 8) | blue) << 8) | green) << 8) | red;
+  uint32_t f_blue = 255 | (blue << 8) | (green << 16) | (red << 24); 
+  return f_blue; 
 }
+
 void set_pixel(struct Image *img, uint32_t index, uint32_t color){
-  blend_colors(color, img->data[index]);
+  img->data[index] = blend_colors(color, img->data[index]);
 }
 int64_t square(int64_t x){
   return x * x;
 }
+
 int64_t square_dist(int64_t x1, int64_t y1, int64_t x2, int64_t y2){
   int64_t x_diff;
   int64_t y_diff;
@@ -115,9 +113,9 @@ void draw_rect(struct Image *img,
                const struct Rect *rect,
                uint32_t color) {
   int32_t min_x = clamp(rect->x, 0, img->width);
-  int32_t max_x = clamp(rect->x + rect->width, 0, img->width);
+  int32_t max_x = clamp(rect->x + rect->width - 1, 0, img->width);
   int32_t min_y = clamp(rect->y, 0, img->height);
-  int32_t max_y = clamp(rect->y + rect->height, 0, img->height);
+  int32_t max_y = clamp(rect->y + rect->height - 1, 0, img->height);
   for(int i = min_x; i <= max_x; i++){
     for(int j = min_y; j <= max_y; j++){
       draw_pixel(img, i, j, color);
@@ -146,7 +144,7 @@ void draw_circle(struct Image *img,
       }
     }
   }
-
+}
 //
 // Draw a tile by copying all pixels in the region
 // enclosed by the tile parameter in the tilemap image
@@ -177,6 +175,7 @@ void draw_tile(struct Image *img,
         uint32_t color = tilemap->data[compute_index(tilemap, i + tile->x, j + tile->y)];
         img->data[compute_index(img, i + x, j + y)] = color;
       }
+    }
   }
 }
 
@@ -199,6 +198,7 @@ void draw_sprite(struct Image *img,
                  int32_t x, int32_t y,
                  struct Image *spritemap,
                  const struct Rect *sprite) {
+  
   if(!in_bounds(spritemap, sprite->x, sprite->y) || 
     !in_bounds(spritemap, sprite->x, sprite->y + sprite->height) || 
     !in_bounds(spritemap, sprite->x + sprite->width, sprite->y) || 
@@ -211,4 +211,4 @@ void draw_sprite(struct Image *img,
     }
   }
 }
-
+                 
