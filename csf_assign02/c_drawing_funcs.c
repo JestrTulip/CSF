@@ -11,7 +11,7 @@
 
 // TODO: implement helper functions
 int32_t in_bounds(struct Image *img, int32_t x, int32_t y){
-  if((x < 0 || x >= img->width - 1) || (y < 0 || y >= img->height - 1)){
+  if((x < 0 || x > img->width) || (y < 0 || y >img->height)){
     return 0;
   }
   return 1;
@@ -139,7 +139,7 @@ void draw_circle(struct Image *img,
                  uint32_t color) {
   for(int i = 0; i < img->width; i++){
     for(int j = 0; j < img->height; j++){
-      if(square_dist(i, x, j, y) <= square(r)){
+      if(square_dist(i, j, x, y) <= square(r)){
         draw_pixel(img, i, j, color);
       }
     }
