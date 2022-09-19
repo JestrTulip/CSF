@@ -11,10 +11,7 @@
 
 // TODO: implement helper functions
 int32_t in_bounds(struct Image *img, int32_t x, int32_t y){
-  if((x < 0 || x > img->width) || (y < 0 || y >img->height)){
-    return 0;
-  }
-  return 1;
+  return (x >= 0 && x < img->width) && (y >= 0 && y < img->height); 
 }
 
 
