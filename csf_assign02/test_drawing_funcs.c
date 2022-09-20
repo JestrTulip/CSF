@@ -77,6 +77,8 @@ void check_picture(struct Image *img, Picture *p) {
 }
 
 // prototypes of test functions
+void test_blend_color(TestObjs *objs);
+void test_square_dist(TestObjs *objs);
 void test_draw_pixel(TestObjs *objs);
 void test_draw_rect(TestObjs *objs);
 void test_draw_circle(TestObjs *objs);
@@ -93,6 +95,8 @@ int main(int argc, char **argv) {
   TEST_INIT();
 
   // TODO: add TEST() directives for your helper functions
+  TEST(test_blend_color);
+  TEST(test_square_dist);
   TEST(test_draw_pixel);
   TEST(test_draw_rect);
   TEST(test_draw_circle);
@@ -101,6 +105,19 @@ int main(int argc, char **argv) {
   TEST(test_draw_sprite);
 
   TEST_FINI();
+}
+
+void test_blend_color(TestObjs *objs){
+uint32_t zero_color = 0x00000000;
+uint32_t full_opaque = 0xAAAAAAFF;
+uint32_t part_opaque = 0xAAAAAAAA;
+uint32_t no_opaque = 0xAAAAAA00;
+ASSERT(blend_colors(full_opaque, zero_color) == 0xAAAAAAFF);
+ASSERT(blend_colors(part_opaque, zero_color) == 0x717171FF);
+ASSERT(blend_colors(no_opaque, zero_color) == 0x000000FF);
+}
+void test_square_dist(TestObjs *objs){
+  ASSERT(square_dist(0,0,0,0) == 0);
 }
 
 void test_draw_pixel(TestObjs *objs) {
