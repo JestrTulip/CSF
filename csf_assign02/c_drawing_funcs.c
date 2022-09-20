@@ -160,18 +160,18 @@ void draw_tile(struct Image *img,
                int32_t x, int32_t y,
                struct Image *tilemap,
                const struct Rect *tile) {
- if(!in_bounds(tilemap, tile->x, tile->y) || 
-    !in_bounds(tilemap, tile->x, tile->y + tile->height) || 
-    !in_bounds(tilemap, tile->x + tile->width, tile->y) || 
-    !in_bounds(tilemap, tile->x + tile->width, tile->y + tile->height)){
+ if(!in_bounds(tilemap, tile->x, tile->y) || //needs an exclusive check due to pixel indexing
+    !in_bounds(tilemap, tile->x, (tile->y + tile->height) - 1) || 
+    !in_bounds(tilemap, (tile->x + tile->width) - 1, tile->y) || 
+    !in_bounds(tilemap, (tile->x + tile->width) - 1, (tile->y + tile->height) - 1)){
     return;
   }
   int32_t min_x = clamp(x, 0, img->width);
   int32_t max_x = clamp(x + tile->width, 0, img->width);
   int32_t min_y = clamp(y, 0, img->height);
   int32_t max_y = clamp(y + tile->height, 0, img->height);
-  for(int i = min_x; i < max_x; ++i){
-    for(int j = min_y; j < max_y; ++j){  
+  for(int i = min_x; i < max_x; i++){
+    for(int j = min_y; j < max_y; j++){  
       uint32_t color = tilemap->data[compute_index(tilemap, (tile->x + i) - min_x, (tile->y + j) - min_y)];
       img->data[compute_index(img, i , j )] = color; 
 
@@ -200,17 +200,17 @@ void draw_sprite(struct Image *img,
                  const struct Rect *sprite) {
   
   if(!in_bounds(spritemap, sprite->x, sprite->y) || 
-    !in_bounds(spritemap, sprite->x, sprite->y + sprite->height) || 
-    !in_bounds(spritemap, sprite->x + sprite->width, sprite->y) || 
-    !in_bounds(spritemap, sprite->x + sprite->width, sprite->y + sprite->height)){
+    !in_bounds(spritemap, sprite->x, (sprite->y + sprite->height) - 1) || 
+    !in_bounds(spritemap, (sprite->x + sprite->width) - 1, sprite->y) || 
+    !in_bounds(spritemap, (sprite->x + sprite->width) - 1, (sprite->y + sprite->height) - 1)){
     return;
   }
   int32_t min_x = clamp(x, 0, img->width);
   int32_t max_x = clamp(x + sprite->width, 0, img->width);
   int32_t min_y = clamp(y, 0, img->height);
   int32_t max_y = clamp(y + sprite->height, 0, img->height);
-  for(int i = min_x; i < max_x; ++i){
-    for(int j = min_y; j < max_y; ++j){  
+  for(int i = min_x; i < max_x; i++){
+    for(int j = min_y; j < max_y; j++){  
       set_pixel(img, compute_index(img, i, j), spritemap->data[compute_index(spritemap, (i + sprite->x) - min_x, (j + sprite->y) - min_y)]);
     }
   }
