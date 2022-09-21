@@ -8,6 +8,12 @@ struct Rect {
   int32_t x, y, width, height;
 };
 
+uint32_t blend_colors(uint32_t fg, uint32_t bg);
+
+uint8_t blend_components(uint32_t fg, uint32_t bg, uint8_t alpha); 
+
+int64_t square_dist(int64_t x1, int64_t y1, int64_t x2, int64_t y2);
+
 void draw_pixel(struct Image *img, int32_t x, int32_t y, uint32_t color);
 
 void draw_rect(struct Image *img,

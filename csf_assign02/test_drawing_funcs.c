@@ -94,7 +94,6 @@ int main(int argc, char **argv) {
 
   TEST_INIT();
 
-  // TODO: add TEST() directives for your helper functions
   TEST(test_blend_color);
   TEST(test_square_dist);
   TEST(test_draw_pixel);
