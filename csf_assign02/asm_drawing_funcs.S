@@ -71,8 +71,8 @@ out_of_bounds:
 compute_index:
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 	movl IMAGE_WIDTH_OFFSET(%rdi), %eax /*move pointer to the image width value*/
-	imul (%esi), %eax /*multiply image width by x coordinate*/
-	addl (%edx), %eax /*add y coordinate to the product of the image width and x coordinate*/
+	imul %edx, %eax /*multiply image width by x coordinate*/
+	addl %esi, %eax /*add y coordinate to the product of the image width and x coordinate*/
 	addq $8, %rsp  /*restore stack pointer to original location*/
 	ret
 
@@ -324,11 +324,19 @@ blend_colors:
 set_pixel:
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
-	movl %esi, %r10d /* move 32 bit index to r10d*/
-	movq $0, %rsi  /*move 0 to rsi to ensure all 64 bits are 0*/
-	movl %r10d, %esi /* return 32 bit index to esi, ensuring no other values are in rsi*/
+	movq %rdi, %r12
+	movl %esi, %r13d
 
-	movl %edx, IMAGE_DATA_OFFSET(%rdi, %rsi, 4) /*replace old color with the new color*/
+	movl %r13d, %r14d /* move 32 bit index to r10d*/
+	movq $0, %r13  /*move 0 to rsi to ensure all 64 bits are 0*/
+	movl %r14d, %r13d /* return 32 bit index to esi, ensuring no other values are in rsi*/
+
+	movl IMAGE_DATA_OFFSET(%r12, %r13, 4), %esi /*replace old color with the new color*/
+	movl %edx, %edi
+	call blend_colors
+
+	movl %eax, IMAGE_DATA_OFFSET(%r12, %r13, 4)
+	
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret
 
@@ -358,7 +366,7 @@ draw_pixel:
 	call compute_index /*call compute index with image pointer, x coord, and y coord as parameters*/
 
 	movl %eax, %esi /*move index to 2nd argument register esi*/
-	movl %ecx, %edi /*move color value to 3rd argument register edi*/
+	movl %ecx, %edx /*move color value to 3rd argument register edi*/
 	call set_pixel /*call set pixel with image pointer, index, and color value as parameters*/
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret
