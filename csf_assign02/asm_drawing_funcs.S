@@ -281,9 +281,11 @@ blend_colors:
 set_pixel:
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
-	addl IMAGE_DATA_OFFSET(%rdi), %esi /*move image pointer to index of pixel to be changed*/
-	movl %edx, (%rdi) /*replace old color with the new color*/
+	movl %esi, %r10 /* move 32 bit index to r10d*/
+	movl $0, %rsi  /*move 0 to rsi to ensure all 64 bits are 0*/
+	movl %r10d, %esi /* return 32 bit index to esi, ensuring no other values are in rsi*/
 
+	movl %edx, IMAGE_DATA_OFFSET(%rdi, %rsi, 4) /*replace old color with the new color*/
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret
 
