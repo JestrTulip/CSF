@@ -33,17 +33,23 @@
 in_bounds: 
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
+	pushq %r12
+	pushq %r13
+
 	movl IMAGE_WIDTH_OFFSET(%rdi), %r12d /*store image width in r10*/ 
 	movl IMAGE_HEIGHT_OFFSET(%rdi), %r13d /*store image height r11*/
 	
-	cmpl %r12d, %esi /*if the x coordinate > image width jump to out_of_bounds*/
+	cmpl %r12d, %esi /*if the x coordinate >= image width jump to out_of_bounds*/
 	jge out_of_bounds
 
-	cmpl %r13d, %edx /*if the y coordinate > image height jump to out_of_bounds*/
+	cmpl %r13d, %edx /*if the y coordinate >= image height jump to out_of_bounds*/
 	jge out_of_bounds
 
 	movl $1, %eax /*if coordinates are within the image move 1 to return register eax*/
 	addq $8, %rsp  /*restore stack pointer to original location*/
+
+	popq %r12 
+	popq %r13 
 
 	ret /*return 1 for point being in bounds*/
 
@@ -176,27 +182,30 @@ get_a:
 	.globl blend_components
 blend_components:
 	
-	subq $8, %rsp /*align stack pointer for procedure calls*/
-
-	/*push r12, r13, r14, and r15 registers to preserve values*/
-
-	imul %edx, %edi /*multiply alpha and foreground component and put it in rdi*/
-	movl $255, %r10d /*move 255 into r10*/
-	subl %edx, %r10d /*subtract alpha from 255 and put it in r10*/
-	imul %esi, %r10d /*multiply (255-alpha) and background component and put it in esi*/
-	addl %r10d, %edi /*add (alpha * fg) and (255-alpha)*bg and put it in esi*/
+	subq $8, %rsp
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rdx
+	movl %edi, %r12d
+	movl %esi, %r13d
+	imul %edx, %r12d /*multiply alpha and foreground component and put it in rdi*/
+	movl $255, %r14d /*move 255 into r10*/
+	subl %edx, %r14d /*subtract alpha from 255 and put it in r10*/
+	imul %r13d, %r14d /*multiply (255-alpha) and background component and put it in esi*/
+	addl %r14d, %r12d /*add (alpha * fg) and (255-alpha)*bg and put it in esi*/
 	movl %r12d, %eax /*put (alpha * fg) + (255-alpha)*bg into edx*/
-	
-	pushq %rdx /*push rdx registers to preserve value*/
-	movl $0, %edx /*move 0 into edx representing first 4 bytes of dividend*/
-	movl $255, %r11d /*move 255 into r11 representing divisor*/
+	movl $0, %edx
+	movl $255, %r15d
 	idiv %r15d /*divide (alpha * fg) + (255-alpha)*bg by 255 and put it in eax*/
-	
-	/*pop rdx registers to preserve value*/
 	popq %rdx
-
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
 	addq $8, %rsp /*restore stack pointer to original location*/
-	ret /*return lended color value in eax*/
+	ret
 
 /*
  * Calculate the blended color of the foreground and background based on a predetermined
@@ -222,51 +231,85 @@ blend_colors:
 	 *        blended red, blended green, blended blue
 	 		  blended alpha, blended bluealpha, blended greenbluealpha, blended redgreenbluealpha
 	 */
-	subq $8, %rsp /*align stack pointer for procedure calls*/
-	call get_a /*get alpha value passing foreground color in %edi as an argument*/
-	movl %eax, %edx /* move alpha value to edx*/
-	call get_b /*get blue component passing foreground color in %edi as an argument*/
-	movl %eax, %r12d /* move foreground blue value to r12d*/
-	call get_g /*get green component passing foreground color in %edi as an argument*/
-	movl %eax, %r13d /* move foreground green value to r13d*/
-	call get_r /*get red component passing foreground color in %edi as an argument*/
-	movl %eax, %r14d /* move foreground red value to r14d*/
-
-	movl %esi, %edi /* move background color to girst argument register edi*/
-	call get_b /*get blue component passing background color in %edi as an argument*/
-	movl %eax, %r15d /* move foreground blue value to r15d*/
-	call get_g /*get green component passing background color in %edi as an argument*/
-	movl %eax, %ebx /* move foreground green value to ebx*/
-	call get_r /*get red component passing background color in %edi as an argument*/
 	
-	movl %eax, %esi /* move background red value to second argument register esi*/
-	movl %r14d, %edi /* move foreground red value to first argument register edi*/
-	call blend_components /* get blended red color passing fg red, bg red, and fg alpha as parameters*/
-	pushq %rax /* push blended red color to stack*/
+	pushq %r14
+	pushq %r13
+	pushq %r12
+	pushq %r15
+	pushq %rbp 
+	//subq $16, %rsp /*align stack pointer for procedure calls*/
+	
 
-	movl %ebx, %esi /* move background green value to second argument register esi*/
-	movl %r13d, %edi /* move foreground green value to first argument register edi*/
-	call blend_components /* get blended green color passing fg green, bg green, and fg alpha as parameters*/
-	pushq %rax /* push blended green color to stack*/
+	movl %edi, %r15d
+	movl %esi, %ebp 
 
-	movl %ebx, %esi /* move background blue value to second argument register esi*/
-	movl %r13d, %edi /* move foreground blue value to first argument register edi*/
-	call blend_components /* get blended blue color passing fg blue, bg blue, and fg alpha as parameters*/
-	movl %eax, %ebp /* move blended blue color to stack*/
+	movl $0, %r12d
 
-	movl $255, %eax /* move blended alpha value into eax*/
-	shl $8, %ebp /* shift blended blue left 8 bits*/
-	or %ebp, %eax /* or blended alpha and blue together*/
+	call get_a
+	movl %eax, %edx
 
-	popq %rbp /* pop blended green color to rbp*/
-	shl $16, %ebp /* shift blended bluealpha left 8 bits*/
-	or %ebp, %eax /* or blended bluealpha and green together*/
+	call get_r
+	movl %eax, %r13d
+	movl %esi, %edi 
+	call get_r
+	movl %eax, %r14d
 
-	popq %rbp /* push blended red color to rbp*/
-	shl $24, %ebp /* shift blended greenbluealpha left 8 bits*/
-	or %ebp, %eax /* or blended greenbluealpha and red together*/
+	movl %r13d, %edi
+	movl %r14d, %esi
 
-	addq $8, %rsp /*restore stack pointer to original location*/
+	call blend_components
+	/*shl $8, %r12*/ 
+	movb %al, %r12b 
+
+	movl %r15d, %edi 
+	movl %ebp, %esi
+
+	call get_g 
+	movl %eax, %r13d 
+	movl %esi, %edi
+	call get_g
+	movl %eax, %r14d 
+
+	movl %r13d, %edi
+	movl %r14d, %esi 
+
+	call blend_components
+	shl $8, %r12
+	movb %al, %r12b 
+
+	movl %r15d, %edi 
+	movl %ebp, %esi
+
+	call get_b 
+	movl %eax, %r13d 
+	movl %esi, %edi
+	call get_b
+	movl %eax, %r14d 
+
+	movl %r13d, %edi
+	movl %r14d, %esi 
+
+	call blend_components
+	shl $8, %r12
+	movb %al, %r12b 
+
+	shl $8, %r12 
+	movb $255, %r12b 
+
+	movl %r12d, %eax 
+
+
+
+	//addq $16, %rsp /*restore stack pointer to original location*/
+
+	popq %rbp
+	popq %r15
+	popq %r12
+	popq %r13
+	popq %r14
+	
+
+	
 	ret /*return gully blended color in return register eax*/
 
 /*
@@ -281,8 +324,8 @@ blend_colors:
 set_pixel:
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
-	movl %esi, %r10 /* move 32 bit index to r10d*/
-	movl $0, %rsi  /*move 0 to rsi to ensure all 64 bits are 0*/
+	movl %esi, %r10d /* move 32 bit index to r10d*/
+	movq $0, %rsi  /*move 0 to rsi to ensure all 64 bits are 0*/
 	movl %r10d, %esi /* return 32 bit index to esi, ensuring no other values are in rsi*/
 
 	movl %edx, IMAGE_DATA_OFFSET(%rdi, %rsi, 4) /*replace old color with the new color*/
