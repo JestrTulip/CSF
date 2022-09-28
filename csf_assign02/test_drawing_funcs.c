@@ -78,7 +78,7 @@ void check_picture(struct Image *img, Picture *p) {
 
 // prototypes of test functions
 void test_blend_color(TestObjs *objs);
-void test_square_dist(TestObjs *objs);
+//void test_square_dist(TestObjs *objs);
 void test_draw_pixel(TestObjs *objs);
 void test_draw_rect(TestObjs *objs);
 void test_draw_circle(TestObjs *objs);
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   TEST_INIT();
 
   TEST(test_blend_color);
-  TEST(test_square_dist);
+  //TEST(test_square_dist);
   TEST(test_draw_pixel);
   TEST(test_draw_rect);
   TEST(test_draw_circle);
@@ -115,9 +115,9 @@ ASSERT(blend_colors(full_opaque, zero_color) == 0xAAAAAAFF);
 ASSERT(blend_colors(part_opaque, zero_color) == 0x717171FF);
 ASSERT(blend_colors(no_opaque, zero_color) == 0x000000FF);
 }
-void test_square_dist(TestObjs *objs){
-  ASSERT(square_dist(0,0,0,0) == 0);
-}
+//void test_square_dist(TestObjs *objs){
+  //ASSERT(square_dist(0,0,0,0) == 0);
+//}
 
 void test_draw_pixel(TestObjs *objs) {
   // initially objs->small pixels are opaque black
