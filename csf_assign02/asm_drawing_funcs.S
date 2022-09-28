@@ -280,9 +280,10 @@ blend_colors:
 	.globl set_pixel
 set_pixel:
 	subq $8, %rsp /*align stack pointer for procedure calls*/
-	addq $IMAGE_DATA_OFFSET, %esi /*adding offset for image data and index location*/
-	addq %esi, %rdi /*moving pointer to index location*/
-	movq %edx, %rdi /*replace old color with the new color*/
+
+	addl IMAGE_DATA_OFFSET(%rdi), %esi /*move image pointer to index of pixel to be changed*/
+	movl %edx, (%rdi) /*replace old color with the new color*/
+
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret
 
