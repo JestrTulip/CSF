@@ -144,6 +144,8 @@ void test_in_bounds(TestObjs *objs){
   ASSERT(0 == in_bounds(&objs->large, 24, 0)); 
   ASSERT(0 == in_bounds(&objs->large, 0, 20)); 
   ASSERT(0 == in_bounds(&objs->large, 50, 50)); 
+  ASSERT(0 == in_bounds(&objs->large, -1, -1)); 
+
 }
 
 void test_compute_index(TestObjs *objs){

@@ -54,6 +54,12 @@ in_bounds:
 	cmpl %r13d, %edx /*if the y coordinate >= image height jump to out_of_bounds*/
 	jge out_of_bounds
 
+	cmpl $0, %esi /*if the x coordinate is less than 0, jump to out_of_bounds*/
+	jl out_of_bounds
+
+	cmpl $0, %esi /*if the y coordinate is less than 0, jump to out_of_bounds*/
+	jl out_of_bounds
+
 	movl $1, %eax /*if coordinates are within the image move 1 to return register eax*/
 	
 	/*pop r12 and r13 to restore values*/
