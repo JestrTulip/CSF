@@ -57,7 +57,7 @@ in_bounds:
 	cmpl $0, %esi /*if the x coordinate is less than 0, jump to out_of_bounds*/
 	jl out_of_bounds
 
-	cmpl $0, %esi /*if the y coordinate is less than 0, jump to out_of_bounds*/
+	cmpl $0, %edx /*if the y coordinate is less than 0, jump to out_of_bounds*/
 	jl out_of_bounds
 
 	movl $1, %eax /*if coordinates are within the image move 1 to return register eax*/
