@@ -41,6 +41,7 @@ in_bounds:
 	 */
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
+	/*push r12 and r13 to preserve values*/
 	pushq %r12
 	pushq %r13
 
@@ -54,15 +55,22 @@ in_bounds:
 	jge out_of_bounds
 
 	movl $1, %eax /*if coordinates are within the image move 1 to return register eax*/
-	addq $8, %rsp  /*restore stack pointer to original location*/
-
+	
+	/*pop r12 and r13 to restore values*/
 	popq %r12 
 	popq %r13 
+
+	addq $8, %rsp  /*restore stack pointer to original location*/
 
 	ret /*return 1 for point being in bounds*/
 
 out_of_bounds: 
 	movl $0, %eax /*if coordinates are out of the image move 0 to return register eax*/
+	
+	/*pop r12 and r13 to restore values*/
+	popq %r12 
+	popq %r13 
+
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret /*return 0 for point being out of bounds*/
 
@@ -104,17 +112,17 @@ clamp:
 	cmp %esi, %edi /*if value less than than jump to clamp_to_min*/
 	jl clamp_to_min
 
-	movl (%edi), %eax /*if value within min-max move the value to the return register eax*/
+	movl %edi, %eax /*if value within min-max move the value to the return register eax*/
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret /*return the value*/
 
 	clamp_to_max:
-	movl (%edx), %eax /*move max to return register eax as value must be clamped to max*/
+	movl %edx, %eax /*move max to return register eax as value must be clamped to max*/
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret /*return clamped maximum value*/
 
 	clamp_to_min:
-	movl (%esi), %eax /*move min to return register eax as value must be clamped to min*/
+	movl %esi, %eax /*move min to return register eax as value must be clamped to min*/
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret /*return clamped minimum value*/
 

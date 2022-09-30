@@ -78,13 +78,20 @@ void check_picture(struct Image *img, Picture *p) {
 
 // prototypes of test functions
 void test_blend_color(TestObjs *objs);
+void test_in_bounds(TestObjs *objs);
+void test_compute_index(TestObjs *objs); 
+void test_clamp(TestObjs *objs); 
+void test_get_r(TestObjs *objs); 
+void test_get_g(TestObjs *objs); 
+void test_get_b(TestObjs *objs); 
+void test_get_alpha(TestObjs *objs); 
 //void test_square_dist(TestObjs *objs);
 void test_draw_pixel(TestObjs *objs);
-void test_draw_rect(TestObjs *objs);
-void test_draw_circle(TestObjs *objs);
-void test_draw_circle_clip(TestObjs *objs);
-void test_draw_tile(TestObjs *objs);
-void test_draw_sprite(TestObjs *objs);
+//void test_draw_rect(TestObjs *objs);
+//void test_draw_circle(TestObjs *objs);
+//void test_draw_circle_clip(TestObjs *objs);
+//void test_draw_tile(TestObjs *objs);
+//void test_draw_sprite(TestObjs *objs);
 
 int main(int argc, char **argv) {
   if (argc > 1) {
@@ -95,13 +102,20 @@ int main(int argc, char **argv) {
   TEST_INIT();
 
   TEST(test_blend_color);
+  TEST(test_in_bounds); 
+  TEST(test_compute_index); 
+  TEST(test_clamp);
+  TEST(test_get_r); 
+  TEST(test_get_g);
+  TEST(test_get_b);
+  TEST(test_get_alpha); 
   //TEST(test_square_dist);
   TEST(test_draw_pixel);
-  TEST(test_draw_rect);
-  TEST(test_draw_circle);
-  TEST(test_draw_circle_clip);
-  TEST(test_draw_tile);
-  TEST(test_draw_sprite);
+  //TEST(test_draw_rect);
+  //TEST(test_draw_circle);
+  //TEST(test_draw_circle_clip);
+  //TEST(test_draw_tile);
+  //TEST(test_draw_sprite);
 
   TEST_FINI();
 }
@@ -115,6 +129,104 @@ ASSERT(blend_colors(full_opaque, zero_color) == 0xAAAAAAFF);
 ASSERT(blend_colors(part_opaque, zero_color) == 0x717171FF);
 ASSERT(blend_colors(no_opaque, zero_color) == 0x000000FF);
 }
+
+void test_in_bounds(TestObjs *objs){
+  ASSERT(1 == in_bounds(&objs->small, 0, 0));
+  ASSERT(1 == in_bounds(&objs->small, 7, 5));
+  ASSERT(0 == in_bounds(&objs->small, 8, 6)); 
+  ASSERT(0 == in_bounds(&objs->small, 8, 0)); 
+  ASSERT(0 == in_bounds(&objs->small, 0, 6)); 
+  ASSERT(0 == in_bounds(&objs->small, 9, 9)); 
+  
+  ASSERT(1 == in_bounds(&objs->large, 0, 0));
+  ASSERT(1 == in_bounds(&objs->large, 7, 5));
+  ASSERT(0 == in_bounds(&objs->large, 24, 20)); 
+  ASSERT(0 == in_bounds(&objs->large, 24, 0)); 
+  ASSERT(0 == in_bounds(&objs->large, 0, 20)); 
+  ASSERT(0 == in_bounds(&objs->large, 50, 50)); 
+}
+
+void test_compute_index(TestObjs *objs){
+  ASSERT(0x0 == compute_index(&objs->small, 0, 0));
+  ASSERT(0x8 == compute_index(&objs->small, 0, 1));
+  ASSERT(0x2F == compute_index(&objs->small, 7, 5));
+
+}
+
+void test_clamp(TestObjs *objs) { 
+  ASSERT(7 == clamp(objs->small.width, 0, 7));
+  ASSERT(6 == clamp(objs->small.width - 2, 0, 7)); 
+  ASSERT(1 == clamp(0, 1, 7)); 
+  ASSERT(1000 == clamp(0, 1000, 10000));
+  ASSERT(10000 == clamp(10001, 1000, 10000));
+
+}
+
+void test_get_r(TestObjs *objs) {
+  uint32_t cont_color = 0x01020304; 
+  uint32_t all_ff = 0xFFFFFFFF; 
+  uint32_t all_black = 0x000000FF; 
+  uint32_t ran_1 = 0xF5378023; 
+  uint32_t ran_2 = 0xA4D26048; 
+  uint32_t ran_3 = 0x08699D39; 
+  ASSERT(0x01 == get_r(cont_color)); 
+  ASSERT(0xFF == get_r(all_ff)); 
+  ASSERT(0x00 == get_r(all_black)); 
+  ASSERT(0xF5 == get_r(ran_1)); 
+  ASSERT(0xA4 == get_r(ran_2)); 
+  ASSERT(0x08 == get_r(ran_3)); 
+
+}
+
+void test_get_g(TestObjs *objs) {
+  uint32_t cont_color = 0x01020304; 
+  uint32_t all_ff = 0xFFFFFFFF; 
+  uint32_t all_black = 0x000000FF; 
+  uint32_t ran_1 = 0xF5378023; 
+  uint32_t ran_2 = 0xA4D26048; 
+  uint32_t ran_3 = 0x08699D39; 
+  ASSERT(0x02 == get_g(cont_color)); 
+  ASSERT(0xFF == get_g(all_ff)); 
+  ASSERT(0x00 == get_g(all_black)); 
+  ASSERT(0x37 == get_g(ran_1)); 
+  ASSERT(0xD2 == get_g(ran_2)); 
+  ASSERT(0x69 == get_g(ran_3)); 
+
+}
+
+void test_get_b(TestObjs *objs) {
+  uint32_t cont_color = 0x01020304; 
+  uint32_t all_ff = 0xFFFFFFFF; 
+  uint32_t all_black = 0x000000FF; 
+  uint32_t ran_1 = 0xF5378023; 
+  uint32_t ran_2 = 0xA4D26048; 
+  uint32_t ran_3 = 0x08699D39; 
+  ASSERT(0x03 == get_b(cont_color)); 
+  ASSERT(0xFF == get_b(all_ff)); 
+  ASSERT(0x00 == get_b(all_black)); 
+  ASSERT(0x80 == get_b(ran_1)); 
+  ASSERT(0x60 == get_b(ran_2)); 
+  ASSERT(0x9D == get_b(ran_3)); 
+
+}
+
+void test_get_alpha(TestObjs *objs) {
+  uint32_t cont_color = 0x01020304; 
+  uint32_t all_ff = 0xFFFFFFFF; 
+  uint32_t all_black = 0x000000FF; 
+  uint32_t ran_1 = 0xF5378023; 
+  uint32_t ran_2 = 0xA4D26048; 
+  uint32_t ran_3 = 0x08699D39; 
+  ASSERT(0x04 == get_a(cont_color)); 
+  ASSERT(0xFF == get_a(all_ff)); 
+  ASSERT(0xFF == get_a(all_black)); 
+  ASSERT(0x23 == get_a(ran_1)); 
+  ASSERT(0x48 == get_a(ran_2)); 
+  ASSERT(0x39 == get_a(ran_3)); 
+
+}
+
+
 //void test_square_dist(TestObjs *objs){
   //ASSERT(square_dist(0,0,0,0) == 0);
 //}
@@ -136,7 +248,7 @@ void test_draw_pixel(TestObjs *objs) {
   draw_pixel(&objs->small, 4, 2, 0x0000FF40); // 1/4-opaque full-intensity blue
   ASSERT(objs->small.data[SMALL_IDX(4, 2)] == 0x000040FF);
 }
-
+/*
 void test_draw_rect(TestObjs *objs) {
   struct Rect red_rect = { .x = 2, .y = 2, .width=3, .height=3 };
   struct Rect blue_rect = { .x = 3, .y = 3, .width=3, .height=3 };
@@ -160,7 +272,8 @@ void test_draw_rect(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-
+*/
+/*
 void test_draw_circle(TestObjs *objs) {
   Picture expected = {
     { {' ', 0x000000FF}, {'x', 0x00FF00FF} },
@@ -176,7 +289,8 @@ void test_draw_circle(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-
+*/
+/*
 void test_draw_circle_clip(TestObjs *objs) {
   Picture expected = {
     { {' ', 0x000000FF}, {'x', 0x00FF00FF} },
@@ -192,7 +306,8 @@ void test_draw_circle_clip(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-
+*/
+/*
 void test_draw_tile(TestObjs *objs) {
   ASSERT(read_image("img/PrtMimi.png", &objs->tilemap) == IMG_SUCCESS);
 
@@ -234,7 +349,8 @@ void test_draw_tile(TestObjs *objs) {
 
   check_picture(&objs->large, &pic);
 }
-
+*/
+/*
 void test_draw_sprite(TestObjs *objs) {
   ASSERT(read_image("img/NpcGuest.png", &objs->spritemap) == IMG_SUCCESS);
 
@@ -278,3 +394,4 @@ void test_draw_sprite(TestObjs *objs) {
 
   check_picture(&objs->large, &pic);
 }
+*/
