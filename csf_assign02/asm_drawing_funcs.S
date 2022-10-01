@@ -438,8 +438,90 @@ not_valid_pixel:
  */
 	.globl draw_rect
 draw_rect:
-	/* TODO: implement */
+	/*Register usage
+	 * %edi - image pointer, rect x, rect x + rect width, rect y, rect y + rect height, image pointer
+	 * %esi - rect pointer, 0, x index
+	 * %edx - color value, image width, image height, y index
+	 * %ecx - color value
+	 * %r12d - image pointer
+	 * %r13d - rect pointer, color value
+	 * %r14d - min x, x index
+	 * %r15d - max x
+	 * %ebx - min y
+	 * %ebp - min y, y index
+	 * %eax - min x, max x, min y, max y
+	 */
+
+	/* push r12, r13, r14, r15, ebx, and ebp to preserve values*/
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %ebx
+	pushq %ebp
+
+	subq $8, %rsp /*align stack pointer for procedure calls*/
+
+	movq %rdi, %r12 /*move image pointer to r12*/
+	movq %rsi, %r13 /*move rect pointer to r13*/
+	push %rdx /*push color value so that it can be preserved for later*/
+
+	movl RECT_X_OFFSET(%r14), %edi /*move rect x value to first argument register edi*/
+	movq $0, %rsi /*move 0 to second argument register rsi*/
+	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	call clamp /*call clamp with rect x, 0, and image width as parameters*/
+	movl %eax, %r14d /*store clamped minimum x value in r14d*/
+	
+	addq RECT_WIDTH_OFFSET(%r13), %rdi /*add rect width to rect x*/
+	call clamp /*call clamp with rect x + rect width, 0, and image width as parameters*/
+	movl %eax, %r15d /*store clamped maximum x value in r15d*/
+
+	movl RECT_Y_OFFSET(%r14), %edi /*move rect y value to first argument register edi*/
+	movl, IMAGE_HEIGHT_OFFSET(%r12), %esi /*move image height to third argument register edx*/
+	call clamp /*call clamp with rect y, 0, and image height as parameters*/
+	movq %eax, %ebx /*store clamped minimum y value in ebx*/
+	
+	addq RECT_HEIGHT_OFFSET(%r13), %rdi /*add rect height to rect y*/
+	call clamp /*call clamp with rect y + rect height, 0, and image height as parameters*/
+	movq %eax, %ebp /*store clamped maximum y value in ebp*/
+
+	pop %r13 /*pop color value into r13*/
+
+.Lx_rectloop:
+	cmp %r14d, %r15d /*compare x value index to max x*/
+	jle .Lexit_x_rectloop /* exit for loop if max x is less than or equal to the x value index*/
+	push %ebx /*push starting y index value so it can be restored for every iteration of the loop*/
+
+.Ly_rectloop:
+	cmp %ebx, %ebp /*compare y value index to max y*/
+	jle .Lexit_y_rectloop /* exit for loop if max y is less than or equal to the x value index*/
+
+	movq %r12, %rdi /*move image pointer to first argument register rdi*/
+	movl %r14d, %esi /*move x index value to second argument register esi*/
+	movl %ebx, %edx /*move y index value to third argument register edx*/
+	movl %r13d, %ecx /*move color value to fourth argument register ecx*/
+	call draw_pixel /*call draw pixel with image pointer, x index, y, index, and color as parameters*/
+	inc %ebx /*increment y index by one*/
+	jmp .Ly_rectloop /*begin next iteration of y loop*/
+
+.Lexit_y_rectloop:
+	inc %r14d /*increment x index by one as end of column has been reached */
+	pop %ebx /*restore y index to min y value*/
+	jmp .Lx_rectloop /*begin next iteration of x loop*/
+
+.Lexit_x_rectloop:
+	addq $8, %rsp  /*restore stack pointer to original location*/
+
+	/* pop r12, r13, r14, r15, ebx, and ebp to restore values*/
+	popq %ebp
+	popq %ebx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	
 	ret
+
 
 /*
  * Draw a circle.
@@ -454,8 +536,91 @@ draw_rect:
  */
 	.globl draw_circle
 draw_circle:
-	/* TODO: implement */
+	/*Register usage
+	 * %edi - image pointer, radius, x index, image pointer
+	 * %esi - x coord, y index, x index
+	 * %edx - y coord, x coord, y index
+	 * %ecx - radius, radius squared, y coord, color value
+	 * %r8 - color value
+	 * %r12d - image pointer
+	 * %r13d - x coord
+	 * %r14d - y coord
+	 * %r15d - radius
+	 * %ebx - x index
+	 * %ebp - y index
+	 * %eax - radius squared, squared dist
+	 */
+
+	/* push r12, r13, r14, r15, ebx, and ebp to preserve values*/
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %ebx
+	pushq %ebp
+	subq $8, %rsp /*align stack pointer for procedure calls*/
+
+	movq %rdi, %r12 /*move image pointer to r12*/
+	movl %esi, %r13d /*move x coordinate to r13d*/
+	movl %edx, %r14d /*move y coordinate to r14d*/
+	movl %ecx, %r15d /*move radius to r15d*/
+	pushq %r8 /*push color value so that it can be preserved for later*/
+
+	movl %r15d, %edi /*move radius to first argument register edi*/
+	call square /*call square with radius as parameter*/
+	movl %eax, %r15d /*move radius squared to r15d*/
+	
+	movl $0, %ebx /*move 0 to x index*/
+	movl $0, %ebp /*move 0 to y index*/
+
+.Lx_circloop:
+	cmp %ebx, IMAGE_WIDTH_OFFSET(%r12) /*compare x index to image width*/
+	jle .Lexit_x_circloop /*if image width less than or equal to x index exit x for loop*/
+.Ly_circloop:
+	cmp %ebp, IMAGE_HEIGHT_OFFSET(%r12) /*compare y index to image height*/
+	jle .Lexit_y_circloop /*if image height less than or equal to y index exit y for loop*/
+
+	movq %ebx, %edi /*move x index to first argument register edi*/
+	movl %ebp, %esi /*move y index to second argument register esi*/
+	movl %r13d, %edx /*move x coord to third argument register edx*/
+	movl %r14d, %ecx /*move y coord to fourth argument register ecx*/
+	call square_dist /*call square_dist with x index, y index, x coord, and y coord as parameters*/
+
+	cmp %eax, %r15d /*compare squared distance to radius squared*/
+	jl .Lout_of_circ /*if radius squared distance less than radius squared point is not in circle and exit if statement*/
+
+	movq %r12, %edi /*move image pointer to first argument register edi*/
+	movl %ebx, %esi /*move x index to second argument register esi*/
+	movl %ebp, %edx /*move y index into third argument register edx*/
+	pop %ecx /*pop color value into ecx*/
+	push %ecx /*push color value back into stack*/
+	call draw_pixel /*call draw pixel with image pointer, x index, y index, and color as parameters*/
+
+	inc %ebp /*increment y index*/
+	jmp .Ly_circloop /*being next iteration of y loop*/
+
+.Lout_of_circ:
+	inc %ebp /*increment y index*/
+	jmp .Ly_circloop /*being next iteration of y loop*/
+
+.Lexit_y_circloop:
+	inc %ebx /*increment x index*/
+	movl $0, %ebp /*restore y index to 0*/
+	jmp .Lx_circloop /*being next iteration of x loop*/
+
+.Lexit_x_circloop:
+	addq $8, %rsp  /*restore stack pointer to original location*/
+
+	/* pop r12, r13, r14, r15, ebx, and ebp to restore values*/
+	popq %ebp
+	popq %ebx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+
 	ret
+
 
 /*
  * Draw a tile by copying all pixels in the region
@@ -473,8 +638,156 @@ draw_circle:
  */
 	.globl draw_tile
 draw_tile:
-	/* TODO: implement */
+	/*Register usage
+	 * %edi - image pointer, tilemap pointer, x coord, x coord + tile width, y coord, y coord + tile height, tilemap pointer, image pointer
+	 * %esi - x coord, tile x, tile x + tile width, 0, bg x, fg x
+	 * %edx - y coord, tile y, tile y + tile height, image width, bg y, fg y
+	 * %ecx - tilemap pointer
+	 * %r8 - tile pointer
+	 * %r12d - image pointer
+	 * %r13d - x coord, x index
+	 * %r14d - y coord, y index
+	 * %r15d - tilemap pointer
+	 * %ebx - tile pointer
+	 * %ebp - stack index
+	 * %eax - in_bounds return value, min x, max x, min y, max y, bg index, fg index
+	 */
+
+	/*Stack usage
+	 * %rsp + 0 - max x
+	 * %rsp + 4 - max y
+	 * %rsp + 8 - min y
+	 * %rsp + 12 - min x
+	 */
+
+	/* push r12, r13, r14, r15, ebx, and ebp to preserve values*/
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %ebx
+	pushq %ebp
+
+	subq $40, %rsp /*align stack pointer for procedure calls and make space to store values in stack*/
+
+	movq %rdi, %r12 /*move image pointer to r12*/
+	movl %esi, %r13d /*move x coord to r13d*/
+	movl %edx, %r14d /*move y coord to r14d*/
+	movq %rcx, %r15 /*move tilemap pointer to r15*/
+	movq %r8, %rbx /*move tile pointer to rbx*/
+
+
+
+	movq %r15, %rdi /*move tilemap pointer to first argument register rdi*/
+	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
+	movl RECT_Y_OFFSET(%rbx), %edx /*move tile y to third argument register edx*/
+	call in_bounds /*call in_bounds with tilemap pointer, tile x, and tile y as parameters*/
+	movl %eax, %ebp /*move in_bounds result to ebp*/
+
+	addl RECT_HEIGHT_OFFSET, %edx /*add tile width to tile x*/
+	subl $1, %edx /*subtract one from tile x + tile height*/
+	call in_bounds /*call in_bounds with tilemap pointer, tile x + tile height - 1, and tile y as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
+
+	movl RECT_X_OFFSET, %esi /*move tile x to second argument register esi*/
+	addl RECT_HEIGHT_OFFSET, %edx /*add tile height to tile y*/
+	subl $1, %edx /*subtract one from tile y + tile height*/
+	call in_bounds /*call in_bounds with tilemap pointer, tile x, and tile y + tile height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result ro previous in_bound results*/
+
+	addl RECT_HEIGHT_OFFSET, %edx /*add tile width to tile x*/
+	subl $1, %edx /*subtract one from tile x + tile height*/
+	call in_bounds /*call in_bounds with tilemap pointer, tile x + tile width - 1, and tile y + tile height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound results*/
+
+	cmp $0, %ebp /*compare in_boud results logical &ed together to 0*/
+	je .Ltile_out_of_bounds /*if any of the in_bounds returned zero than the &ed value is zero, so tile is not completely within tilemap and jump to tile_out_of_bounds*/
+
+
+
+	movl r13d, %edi /*move x coord to first argument register edi*/
+	movq $0, %rsi /*move 0 to second argument register rsi*/
+	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	call clamp ./*call clamp with x coord, 0, and image width as parameters*/
+	movl $3, %ebp /*move 3 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum x value in stack*/
+	movl %eax %r13d /*move minimum x value to r13*/
+
+	addl, RECT_WIDTH_OFFSET(%rbx), %edi /*add tile width to x coord*/
+	call clamp ./*call clamp with x coord + tile width, 0, and image width as parameters*/
+	movl $0, %ebp /*move 0 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum x value in stack*/
+
+	movl r14d, %edi /*move y coord to first argument register edi*/
+	movl, IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
+	call clamp ./*call clamp with y coord, 0, and image height as parameters*/
+	movl $1, %ebp /*move 1 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum y value in stack*/
+	movl %eax %r14d /*move minimum y value to r14*/
+	
+	addl, RECT_HEIGHT_OFFSET(%rbx), %edi /*add tile height to y coord*/
+	call clamp ./*call clamp with y coord + tile height, 0, and image width as parameters*/
+	movl $2, %ebp /*move 3 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum y value in stack*/
+	
+
+
+
+.Lx_tileloop:
+	cmp %r13d, 0(%rsp) /*compare x index to max x*/
+	jle .Lexit_x_tileloop /*if max x less than or equal to x index then exit x loop*/
+.Ly_tileloop:
+	cmp %r14d, 4(%rsp) /*compare y index to max y*/
+	jle .Lexit_y_tileloop  /*if max y less than or equal to y index then exit y loop*/
+
+	movq %r15, %rdi /*move tilemap pointer to first argument register rdi*/
+	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
+	addl %r13d, %esi /*add x index to tile x*/
+	movl $3, %ebp /*move 3 to stack index*/
+	subq (%rsp, %rbp, 4), %esx /*subtract min x from tile x + x index*/
+	movl RECT_Y_OFFSET(%rbx), %edx /*move tile y to third argument register edi*/
+	addl %r14d, %edx /*add y index to tile y*/
+	subq 4(%rsp), %edx /*subtract min y from tile y + y index*/
+	movq $0, %rax /*move 0 to rax to ensure entire register is empty*/
+	call compute_index /*call compute index with tilemap pointer, tile x + x index - min x, and tile y + y index - min y*/
+	movl %rax, %rbp /*move background index to ebp*/
+
+	movq %r12, %rdi /*move image pointer to first argument register rdi*/
+	movl %r13d, %esi /*move x index to second argument register esi*/
+	movl %r14d, %edx /*move y index to third argument register edx*/
+	movq $0, %eax /*move 0 to rax to ensure entire register is empty*/
+	call compute_index /*call computer index with image pointer, x index, and y index as parameters*/
+
+	push %r12 /*push image pointer to preserve value*/
+	push %r15 /*push tilemap pointer to preserve value*/
+
+	movq IMAGE_DATA_OFFSET(%r12), %r12 /*replace r12 with image data*/
+	movq IMAGE_DATA_OFFSET(%r15), %r15 /*replace r15 with tilemap data*/
+
+	movl (%r15, %ebp, 4), (%r12, %eax, 4) /*replace foreground pixel color with background pixel color*/
+
+
+	pop%r15 /*pop tilemap pointer to restore value*/
+	pop %r12 /*pop image pointer to restore value*/
+
+	inc %r14d /*increment y index by one*/
+	.Ljmp y_tileloop /*begin next iteration of y loop*/
+
+
+.Lexit_y_tileloop:
+	inc %r13d /*increment x index by one*/
+	movl 4(%rsp), %r14d /*reset y index to y_min*/
+	jmp .Lx_tileloop /*begin next iteration of x loop*/
+
+.Lexit_x_tileloop:
+	addq $40, %rsp /*restore stack pointer to original location*/
 	ret
+
+
+.Ltile_out_of_bounds:
+	addq $40, %rsp /*restore stack pointer to original location*/
+	ret
+
 
 /*
  * Draw a sprite by copying all pixels in the region
@@ -493,8 +806,154 @@ draw_tile:
  */
 	.globl draw_sprite
 draw_sprite:
-	/* TODO: implement */
+	/*Register usage
+	 * %edi - image pointer, spritemap pointer, x coord, x coord + sprite width, y coord, y coord + sprite height, spritemap pointer, image pointer
+	 * %esi - x coord, sprite x, sprite x + sprite width, 0, bg x, fg x, pixel index
+	 * %edx - y coord, sprite y, sprite y + sprite height, image width, bg y, fg y, fg color
+	 * %ecx - spritemap pointer
+	 * %r8 - sprite pointer
+	 * %r12d - image pointer
+	 * %r13d - x coord, x index
+	 * %r14d - y coord, y index
+	 * %r15d - spritemap pointer
+	 * %ebx - sprite pointer
+	 * %ebp - stack index, fg index
+	 * %eax - in_bounds return value, min x, max x, min y, max y, bg index, fg index
+	 */
+
+	/*Stack usage
+	 * %rsp + 0 - max x
+	 * %rsp + 4 - max y
+	 * %rsp + 8 - min y
+	 * %rsp + 12 - min x
+	 */
+
+	/* push r12, r13, r14, r15, ebx, and ebp to preserve values*/
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %ebx
+	pushq %ebp
+
+	subq $40, %rsp /*align stack pointer for procedure calls and make space to store values in stack*/
+
+	movq %rdi, %r12 /*move image pointer to r12*/
+	movl %esi, %r13d /*move x coord to r13d*/
+	movl %edx, %r14d /*move y coord to r14d*/
+	movq %rcx, %r15 /*move spritemap pointer to r15*/
+	movq %r8, %rbx /*move sprite pointer to rbx*/
+
+
+
+	movq %r15, %rdi /*move spritemap pointer to first argument register rdi*/
+	movl RECT_X_OFFSET(%rbx), %esi /*move sprite x to second argument register esi*/
+	movl RECT_Y_OFFSET(%rbx), %edx /*move sprite y to third argument register edx*/
+	call in_bounds /*call in_bounds with spritemap pointer, sprite x, and sprite y as parameters*/
+	movl %eax, %ebp /*move in_bounds result to ebp*/
+
+	addl RECT_HEIGHT_OFFSET, %edx /*add sprite width to tile x*/
+	subl $1, %edx /*subtract one from sprite x + sprite height*/
+	call in_bounds /*call in_bounds with spritemap pointer, tile x + tile height - 1, and sprite y as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
+
+	movl RECT_X_OFFSET, %esi /*move sprite x to second argument register esi*/
+	addl RECT_HEIGHT_OFFSET, %edx /*add sprite height to tile y*/
+	subl $1, %edx /*subtract one from sprite y + sprite height*/
+	call in_bounds /*call in_bounds with spritemap pointer, sprite x, and sprite y + sprite height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result ro previous in_bound results*/
+
+	addl RECT_HEIGHT_OFFSET, %edx /*add sprite width to tile x*/
+	subl $1, %edx /*subtract one from sprite x + sprite height*/
+	call in_bounds /*call in_bounds with spritemap pointer, sprite x + sprite width - 1, and sprite y + sprite height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound results*/
+
+	cmp $0, %ebp /*compare in_boud results logical &ed together to 0*/
+	je .Ltile_out_of_bounds /*if any of the in_bounds returned zero than the &ed value is zero, so sprite is not completely within spritemap and jump to sprite_out_of_bounds*/
+
+
+
+	movl r13d, %edi /*move x coord to first argument register edi*/
+	movq $0, %rsi /*move 0 to second argument register rsi*/
+	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	call clamp ./*call clamp with x coord, 0, and image width as parameters*/
+	movl $3, %ebp /*move 3 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum x value in stack*/
+	movl %eax %r13d /*move minimum v value to r13*/
+
+	addl, RECT_WIDTH_OFFSET(%rbx), %edi /*add sprite width to x coord*/
+	call clamp ./*call clamp with x coord + sprite width, 0, and image width as parameters*/
+	movl $0, %ebp /*move 0 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum x value in stack*/
+
+	movl r14d, %edi /*move y coord to first argument register edi*/
+	movl, IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
+	call clamp ./*call clamp with y coord, 0, and image height as parameters*/
+	movl $1, %ebp /*move 1 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum y value in stack*/
+	movl %eax %r14d /*move minimum y value to r14*/
+	
+	addl, RECT_HEIGHT_OFFSET(%rbx), %edi /*add sprite height to y coord*/
+	call clamp ./*call clamp with y coord + sprite height, 0, and image width as parameters*/
+	movl $2, %ebp /*move 3 to stack index*/
+	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum y value in stack*/
+	
+
+
+
+.Lx_spriteloop:
+	cmp %r13d, 0(%rsp) /*compare x index to max x*/
+	jle .Lexit_x_spriteloop /*if max x less than or equal to x index then exit x loop*/
+.Ly_spriteloop:
+	cmp %r14d, 4(%rsp) /*compare y index to max y*/
+	jle .Lexit_y_spriteloop  /*if max y less than or equal to y index then exit y loop*/
+
+	movq %r15, %rdi /*move spritemap pointer to first argument register rdi*/
+	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
+	addl %r13d, %esi /*add x index to sprite x*/
+	movl $3, %ebp /*move 3 to stack index*/
+	subq (%rsp, %rbp, 4), %esx /*subtract min x from sprite x + x index*/
+	movl RECT_Y_OFFSET(%rbx), %edx /*move sprite y to third argument register edi*/
+	addl %r14d, %edx /*add y index to sprite y*/
+	subq 4(%rsp), %edx /*subtract min y from sprite y + y index*/
+	movq $0, %rax /*move 0 to rax to ensure entire register is empty*/
+	call compute_index /*call compute index with spritemap pointer, sprite x + x index - min x, and sprite y + y index - min y*/
+	movl %rax, %rbp /*move background index to ebp*/
+
+	movq %r12, %rdi /*move image pointer to first argument register rdi*/
+	movl %r13d, %esi /*move x index to second argument register esi*/
+	movl %r14d, %edx /*move y index to third argument register edx*/
+	movq $0, %eax /*move 0 to rax to ensure entire register is empty*/
+	call compute_index /*call computer index with image pointer, x index, and y index as parameters*/
+
+	movq %r12, %rdi /*move image pointer to first argument register rdi*/
+
+	movl %eax, %esi /*move image pixel index to second argument register esi*/
+
+	push %r15 /*push spritemap pointer to preserve data*/
+	movq IMAGE_DATA_OFFSET(%r15), %r15 /*replace r15 with spritemap data*/
+	movl (%r15, %ebp, 4), %edx /*move sprite pixel color into third argument register edx*/
+	pop%r15 /*restore spritemap pointer*/
+	call set_pixel /*call set pixel with image pointer, image pixel index, and fg sprite color as parameters*/
+
+	inc %r14d /*increment y index by one*/
+	jmp .Ly_spriteloop /*begin next iteration of y loop*/
+
+
+.Lexit_y_spriteloop:
+	inc %r13d /*increment x index by one*/
+	movl 4(%rsp), %r14d /*reset y index to y_min*/
+	jmp .Lx_spriteloop /*begin next iteration of x loop*/
+
+.Lexit_x_spriteloop:
+	addq $40, %rsp /*restore stack pointer to original location*/
 	ret
+
+
+.Lsprite_out_of_bounds:
+	addq $40, %rsp /*restore stack pointer to original location*/
+	ret
+
 
 /*
 vim:ft=gas:
