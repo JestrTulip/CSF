@@ -382,6 +382,89 @@ set_pixel:
 
 	addq $8, %rsp /*restore stack pointer to original location*/
 	ret
+/*
+ * Calculate the square of an integer
+ *
+ * Parameters:
+ *   %rdi     - integer to be squared
+ */
+	.globl square
+square:
+	subq $8, %rsp /*align stack pointer for procedure calls*/
+	imul %edi, %edi /*square first argument*/
+	movl %edi, %eax /*move squared argument to return register eax*/
+	addq $8, %rsp /*restore stack pointer to original location*/
+	ret
+
+
+/*
+ * Calculate the squared distance between two points
+ *
+ * Parameters:
+ * %edi     - x1
+ * %esi     - y1
+ * %edx     - x2
+ * %ecx     - y2
+ */
+	.globl square_dist
+square_dist:
+/* Register use:
+ * %edi - x1, x1x2 difference, y1y2 difference
+ * %esi - y1
+ * %edx - x2
+ * %ecx - y2
+ * %r10 - x1x2 difference, x1x2 squared difference
+ * %r11 - y1y2 difference
+ * %eax - x1x2 squared difference, y1y2 squared difference, total squared difference
+ */
+	
+	/* push r12 and r13 to preserve values*/
+	push %r12
+	push %r13
+
+	subq $8, %rsp /*align stack pointer for procedure calls*/
+	cmp %edi, %edx /*compare x1 and x2*/
+	jge .Lx2_greater /*if x2 greater than x1 then jump to x2_greater*/
+	subl %edx, %edi /*if x1 greater than x2 then subtract x2 from x1*/
+	movl %edi, %r12d /*move x1-x2 to r12d*/
+	jmp .Ly_check /*jump to y value comparison*/
+
+.Lx2_greater:
+	subl %edi, %edx /*subtract x1 from x2*/
+	movl %edx, %r12d /*move x2-x1 to r12d*/
+	jmp .Ly_check /*jump to y value comparison*/
+
+.Ly_check:
+	cmp %esi, %ecx /*compare y1 and y2*/
+	jge .Ly2_greater /*if y2 greater than y1 then jump to y2_greater*/
+	subl %ecx, %esi /*if y1 greater than y2 then subtract y2 from y1*/
+	movl %esi, %r13d /*move y1-y2 to r13d*/
+	jmp .Lsquare_sum /*jump to squared distance calculation*/
+
+.Ly2_greater:
+	subl %esi, %ecx /*subtract y1 from y2*/
+	movl %ecx, %r11d /*move y2-y1 to r11d*/
+	jmp .Lsquare_sum /*jump to squared distance calculation*/
+
+.Lsquare_sum:
+	movl %r12d, %edi /*move x1, x2 difference to first argument register edi*/
+	call square /*call square with x1, x2 difference*/
+	movl %eax, %r12d /*move (x1-x2)^2 to r12d*/
+
+	movl %r13d, %edi /*move y1, y2 difference to first argument register edi*/
+	call square /*call square with y1, y2 difference*/
+
+	addl %r12d, %eax /*add (x1-x2)^2 and (y1-y2)^2*/
+
+	addq $8, %rsp /*restore stack pointer to original location*/
+
+	/* pop r12 and r13 to restore values*/
+	pop %r12
+	pop %r13
+
+	ret /*return squared distance*/
+	
+
 
 
 
@@ -457,8 +540,8 @@ draw_rect:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	pushq %ebx
-	pushq %ebp
+	pushq %rbx
+	pushq %rbp
 
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
@@ -468,7 +551,7 @@ draw_rect:
 
 	movl RECT_X_OFFSET(%r14), %edi /*move rect x value to first argument register edi*/
 	movq $0, %rsi /*move 0 to second argument register rsi*/
-	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	movl IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
 	call clamp /*call clamp with rect x, 0, and image width as parameters*/
 	movl %eax, %r14d /*store clamped minimum x value in r14d*/
 	
@@ -477,20 +560,20 @@ draw_rect:
 	movl %eax, %r15d /*store clamped maximum x value in r15d*/
 
 	movl RECT_Y_OFFSET(%r14), %edi /*move rect y value to first argument register edi*/
-	movl, IMAGE_HEIGHT_OFFSET(%r12), %esi /*move image height to third argument register edx*/
+	movl IMAGE_HEIGHT_OFFSET(%r12), %esi /*move image height to third argument register edx*/
 	call clamp /*call clamp with rect y, 0, and image height as parameters*/
-	movq %eax, %ebx /*store clamped minimum y value in ebx*/
+	movl %eax, %ebx /*store clamped minimum y value in ebx*/
 	
 	addq RECT_HEIGHT_OFFSET(%r13), %rdi /*add rect height to rect y*/
 	call clamp /*call clamp with rect y + rect height, 0, and image height as parameters*/
-	movq %eax, %ebp /*store clamped maximum y value in ebp*/
+	movl %eax, %ebp /*store clamped maximum y value in ebp*/
 
 	pop %r13 /*pop color value into r13*/
 
 .Lx_rectloop:
 	cmp %r14d, %r15d /*compare x value index to max x*/
 	jle .Lexit_x_rectloop /* exit for loop if max x is less than or equal to the x value index*/
-	push %ebx /*push starting y index value so it can be restored for every iteration of the loop*/
+	push %rbx /*push starting y index value so it can be restored for every iteration of the loop*/
 
 .Ly_rectloop:
 	cmp %ebx, %ebp /*compare y value index to max y*/
@@ -506,15 +589,15 @@ draw_rect:
 
 .Lexit_y_rectloop:
 	inc %r14d /*increment x index by one as end of column has been reached */
-	pop %ebx /*restore y index to min y value*/
+	pop %rbx /*restore y index to min y value*/
 	jmp .Lx_rectloop /*begin next iteration of x loop*/
 
 .Lexit_x_rectloop:
 	addq $8, %rsp  /*restore stack pointer to original location*/
 
 	/* pop r12, r13, r14, r15, ebx, and ebp to restore values*/
-	popq %ebp
-	popq %ebx
+	popq %rbp
+	popq %rbx
 	popq %r15
 	popq %r14
 	popq %r13
@@ -556,8 +639,8 @@ draw_circle:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	pushq %ebx
-	pushq %ebp
+	pushq %rbx
+	pushq %rbp
 	subq $8, %rsp /*align stack pointer for procedure calls*/
 
 	movq %rdi, %r12 /*move image pointer to r12*/
@@ -580,7 +663,7 @@ draw_circle:
 	cmp %ebp, IMAGE_HEIGHT_OFFSET(%r12) /*compare y index to image height*/
 	jle .Lexit_y_circloop /*if image height less than or equal to y index exit y for loop*/
 
-	movq %ebx, %edi /*move x index to first argument register edi*/
+	movl %ebx, %edi /*move x index to first argument register edi*/
 	movl %ebp, %esi /*move y index to second argument register esi*/
 	movl %r13d, %edx /*move x coord to third argument register edx*/
 	movl %r14d, %ecx /*move y coord to fourth argument register ecx*/
@@ -589,11 +672,11 @@ draw_circle:
 	cmp %eax, %r15d /*compare squared distance to radius squared*/
 	jl .Lout_of_circ /*if radius squared distance less than radius squared point is not in circle and exit if statement*/
 
-	movq %r12, %edi /*move image pointer to first argument register edi*/
+	movq %r12, %rdi /*move image pointer to first argument register edi*/
 	movl %ebx, %esi /*move x index to second argument register esi*/
 	movl %ebp, %edx /*move y index into third argument register edx*/
-	pop %ecx /*pop color value into ecx*/
-	push %ecx /*push color value back into stack*/
+	pop %rcx /*pop color value into ecx*/
+	push %rcx /*push color value back into stack*/
 	call draw_pixel /*call draw pixel with image pointer, x index, y index, and color as parameters*/
 
 	inc %ebp /*increment y index*/
@@ -612,8 +695,8 @@ draw_circle:
 	addq $8, %rsp  /*restore stack pointer to original location*/
 
 	/* pop r12, r13, r14, r15, ebx, and ebp to restore values*/
-	popq %ebp
-	popq %ebx
+	popq %rbp
+	popq %rbx
 	popq %r15
 	popq %r14
 	popq %r13
@@ -665,8 +748,8 @@ draw_tile:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	pushq %ebx
-	pushq %ebp
+	pushq %rbx
+	pushq %rbp
 
 	subq $40, %rsp /*align stack pointer for procedure calls and make space to store values in stack*/
 
@@ -705,30 +788,30 @@ draw_tile:
 
 
 
-	movl r13d, %edi /*move x coord to first argument register edi*/
+	movl %r13d, %edi /*move x coord to first argument register edi*/
 	movq $0, %rsi /*move 0 to second argument register rsi*/
-	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
-	call clamp ./*call clamp with x coord, 0, and image width as parameters*/
+	movl IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	call clamp /*call clamp with x coord, 0, and image width as parameters*/
 	movl $3, %ebp /*move 3 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum x value in stack*/
-	movl %eax %r13d /*move minimum x value to r13*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped minimum x value in stack*/
+	movl %eax, %r13d /*move minimum x value to r13*/
 
-	addl, RECT_WIDTH_OFFSET(%rbx), %edi /*add tile width to x coord*/
-	call clamp ./*call clamp with x coord + tile width, 0, and image width as parameters*/
+	addl RECT_WIDTH_OFFSET(%rbx), %edi /*add tile width to x coord*/
+	call clamp /*call clamp with x coord + tile width, 0, and image width as parameters*/
 	movl $0, %ebp /*move 0 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum x value in stack*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped maximum x value in stack*/
 
-	movl r14d, %edi /*move y coord to first argument register edi*/
-	movl, IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
-	call clamp ./*call clamp with y coord, 0, and image height as parameters*/
+	movl %r14d, %edi /*move y coord to first argument register edi*/
+	movl IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
+	call clamp /*call clamp with y coord, 0, and image height as parameters*/
 	movl $1, %ebp /*move 1 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum y value in stack*/
-	movl %eax %r14d /*move minimum y value to r14*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped minimum y value in stack*/
+	movl %eax, %r14d /*move minimum y value to r14*/
 	
-	addl, RECT_HEIGHT_OFFSET(%rbx), %edi /*add tile height to y coord*/
-	call clamp ./*call clamp with y coord + tile height, 0, and image width as parameters*/
+	addl RECT_HEIGHT_OFFSET(%rbx), %edi /*add tile height to y coord*/
+	call clamp /*call clamp with y coord + tile height, 0, and image width as parameters*/
 	movl $2, %ebp /*move 3 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum y value in stack*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped maximum y value in stack*/
 	
 
 
@@ -744,18 +827,18 @@ draw_tile:
 	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
 	addl %r13d, %esi /*add x index to tile x*/
 	movl $3, %ebp /*move 3 to stack index*/
-	subq (%rsp, %rbp, 4), %esx /*subtract min x from tile x + x index*/
+	subl (%rsp, %rbp, 4), %esi /*subtract min x from tile x + x index*/
 	movl RECT_Y_OFFSET(%rbx), %edx /*move tile y to third argument register edi*/
 	addl %r14d, %edx /*add y index to tile y*/
-	subq 4(%rsp), %edx /*subtract min y from tile y + y index*/
+	subl 4(%rsp), %edx /*subtract min y from tile y + y index*/
 	movq $0, %rax /*move 0 to rax to ensure entire register is empty*/
 	call compute_index /*call compute index with tilemap pointer, tile x + x index - min x, and tile y + y index - min y*/
-	movl %rax, %rbp /*move background index to ebp*/
+	movl %eax, %ebp /*move background index to ebp*/
 
 	movq %r12, %rdi /*move image pointer to first argument register rdi*/
 	movl %r13d, %esi /*move x index to second argument register esi*/
 	movl %r14d, %edx /*move y index to third argument register edx*/
-	movq $0, %eax /*move 0 to rax to ensure entire register is empty*/
+	movl $0, %eax /*move 0 to rax to ensure entire register is empty*/
 	call compute_index /*call computer index with image pointer, x index, and y index as parameters*/
 
 	push %r12 /*push image pointer to preserve value*/
@@ -764,14 +847,16 @@ draw_tile:
 	movq IMAGE_DATA_OFFSET(%r12), %r12 /*replace r12 with image data*/
 	movq IMAGE_DATA_OFFSET(%r15), %r15 /*replace r15 with tilemap data*/
 
-	movl (%r15, %ebp, 4), (%r12, %eax, 4) /*replace foreground pixel color with background pixel color*/
+	movl (%r15, %rbp, 4), %r10d /*move foreground pixel color to temp register r10d*/
+	movl %r10d, (%r12, %rax, 4) /*replace background pixel color with foreground pixel color*/
+	
 
 
-	pop%r15 /*pop tilemap pointer to restore value*/
+	pop %r15 /*pop tilemap pointer to restore value*/
 	pop %r12 /*pop image pointer to restore value*/
 
 	inc %r14d /*increment y index by one*/
-	.Ljmp y_tileloop /*begin next iteration of y loop*/
+	jmp .Ly_tileloop /*begin next iteration of y loop*/
 
 
 .Lexit_y_tileloop:
@@ -833,8 +918,8 @@ draw_sprite:
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	pushq %ebx
-	pushq %ebp
+	pushq %rbx
+	pushq %rbp
 
 	subq $40, %rsp /*align stack pointer for procedure calls and make space to store values in stack*/
 
@@ -873,30 +958,30 @@ draw_sprite:
 
 
 
-	movl r13d, %edi /*move x coord to first argument register edi*/
+	movl %r13d, %edi /*move x coord to first argument register edi*/
 	movq $0, %rsi /*move 0 to second argument register rsi*/
-	movl, IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
-	call clamp ./*call clamp with x coord, 0, and image width as parameters*/
+	movl IMAGE_WIDTH_OFFSET(%r12), %edx /*move image width to third argument register edx*/
+	call clamp /*call clamp with x coord, 0, and image width as parameters*/
 	movl $3, %ebp /*move 3 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum x value in stack*/
-	movl %eax %r13d /*move minimum v value to r13*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped minimum x value in stack*/
+	movl %eax, %r13d /*move minimum v value to r13*/
 
-	addl, RECT_WIDTH_OFFSET(%rbx), %edi /*add sprite width to x coord*/
-	call clamp ./*call clamp with x coord + sprite width, 0, and image width as parameters*/
+	addl RECT_WIDTH_OFFSET(%rbx), %edi /*add sprite width to x coord*/
+	call clamp /*call clamp with x coord + sprite width, 0, and image width as parameters*/
 	movl $0, %ebp /*move 0 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum x value in stack*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped maximum x value in stack*/
 
-	movl r14d, %edi /*move y coord to first argument register edi*/
-	movl, IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
-	call clamp ./*call clamp with y coord, 0, and image height as parameters*/
+	movl %r14d, %edi /*move y coord to first argument register edi*/
+	movl IMAGE_HEIGHT_OFFSET(%r12), %edx /*move image height to third argument register edx*/
+	call clamp /*call clamp with y coord, 0, and image height as parameters*/
 	movl $1, %ebp /*move 1 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped minimum y value in stack*/
-	movl %eax %r14d /*move minimum y value to r14*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped minimum y value in stack*/
+	movl %eax, %r14d /*move minimum y value to r14*/
 	
-	addl, RECT_HEIGHT_OFFSET(%rbx), %edi /*add sprite height to y coord*/
-	call clamp ./*call clamp with y coord + sprite height, 0, and image width as parameters*/
+	addl RECT_HEIGHT_OFFSET(%rbx), %edi /*add sprite height to y coord*/
+	call clamp /*call clamp with y coord + sprite height, 0, and image width as parameters*/
 	movl $2, %ebp /*move 3 to stack index*/
-	movl %eax, (%rsp, %ebp, 4) /*store clamped maximum y value in stack*/
+	movl %eax, (%rsp, %rbp, 4) /*store clamped maximum y value in stack*/
 	
 
 
@@ -912,18 +997,18 @@ draw_sprite:
 	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
 	addl %r13d, %esi /*add x index to sprite x*/
 	movl $3, %ebp /*move 3 to stack index*/
-	subq (%rsp, %rbp, 4), %esx /*subtract min x from sprite x + x index*/
+	subl (%rsp, %rbp, 4), %esi /*subtract min x from sprite x + x index*/
 	movl RECT_Y_OFFSET(%rbx), %edx /*move sprite y to third argument register edi*/
 	addl %r14d, %edx /*add y index to sprite y*/
-	subq 4(%rsp), %edx /*subtract min y from sprite y + y index*/
+	subl 4(%rsp), %edx /*subtract min y from sprite y + y index*/
 	movq $0, %rax /*move 0 to rax to ensure entire register is empty*/
 	call compute_index /*call compute index with spritemap pointer, sprite x + x index - min x, and sprite y + y index - min y*/
-	movl %rax, %rbp /*move background index to ebp*/
+	movl %eax, %ebp /*move background index to ebp*/
 
 	movq %r12, %rdi /*move image pointer to first argument register rdi*/
 	movl %r13d, %esi /*move x index to second argument register esi*/
 	movl %r14d, %edx /*move y index to third argument register edx*/
-	movq $0, %eax /*move 0 to rax to ensure entire register is empty*/
+	movl $0, %eax /*move 0 to rax to ensure entire register is empty*/
 	call compute_index /*call computer index with image pointer, x index, and y index as parameters*/
 
 	movq %r12, %rdi /*move image pointer to first argument register rdi*/
@@ -932,8 +1017,8 @@ draw_sprite:
 
 	push %r15 /*push spritemap pointer to preserve data*/
 	movq IMAGE_DATA_OFFSET(%r15), %r15 /*replace r15 with spritemap data*/
-	movl (%r15, %ebp, 4), %edx /*move sprite pixel color into third argument register edx*/
-	pop%r15 /*restore spritemap pointer*/
+	movl (%r15, %rbp, 4), %edx /*move sprite pixel color into third argument register edx*/
+	pop %r15 /*restore spritemap pointer*/
 	call set_pixel /*call set pixel with image pointer, image pixel index, and fg sprite color as parameters*/
 
 	inc %r14d /*increment y index by one*/
