@@ -85,13 +85,13 @@ void test_get_r(TestObjs *objs);
 void test_get_g(TestObjs *objs); 
 void test_get_b(TestObjs *objs); 
 void test_get_alpha(TestObjs *objs); 
-//void test_square_dist(TestObjs *objs);
+void test_square_dist(TestObjs *objs);
 void test_draw_pixel(TestObjs *objs);
-//void test_draw_rect(TestObjs *objs);
-//void test_draw_circle(TestObjs *objs);
-//void test_draw_circle_clip(TestObjs *objs);
-//void test_draw_tile(TestObjs *objs);
-//void test_draw_sprite(TestObjs *objs);
+void test_draw_rect(TestObjs *objs);
+void test_draw_circle(TestObjs *objs);
+void test_draw_circle_clip(TestObjs *objs);
+void test_draw_tile(TestObjs *objs);
+void test_draw_sprite(TestObjs *objs);
 
 int main(int argc, char **argv) {
   if (argc > 1) {
@@ -109,13 +109,13 @@ int main(int argc, char **argv) {
   TEST(test_get_g);
   TEST(test_get_b);
   TEST(test_get_alpha); 
-  //TEST(test_square_dist);
+  TEST(test_square_dist);
   TEST(test_draw_pixel);
-  //TEST(test_draw_rect);
-  //TEST(test_draw_circle);
-  //TEST(test_draw_circle_clip);
-  //TEST(test_draw_tile);
-  //TEST(test_draw_sprite);
+  TEST(test_draw_rect);
+  TEST(test_draw_circle);
+  TEST(test_draw_circle_clip);
+  TEST(test_draw_tile);
+  TEST(test_draw_sprite);
 
   TEST_FINI();
 }
@@ -229,9 +229,9 @@ void test_get_alpha(TestObjs *objs) {
 }
 
 
-//void test_square_dist(TestObjs *objs){
-  //ASSERT(square_dist(0,0,0,0) == 0);
-//}
+void test_square_dist(TestObjs *objs){
+  ASSERT(square_dist(0,0,0,0) == 0);
+}
 
 void test_draw_pixel(TestObjs *objs) {
   // initially objs->small pixels are opaque black
@@ -250,7 +250,7 @@ void test_draw_pixel(TestObjs *objs) {
   draw_pixel(&objs->small, 4, 2, 0x0000FF40); // 1/4-opaque full-intensity blue
   ASSERT(objs->small.data[SMALL_IDX(4, 2)] == 0x000040FF);
 }
-/*
+
 void test_draw_rect(TestObjs *objs) {
   struct Rect red_rect = { .x = 2, .y = 2, .width=3, .height=3 };
   struct Rect blue_rect = { .x = 3, .y = 3, .width=3, .height=3 };
@@ -274,8 +274,8 @@ void test_draw_rect(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-*/
-/*
+
+
 void test_draw_circle(TestObjs *objs) {
   Picture expected = {
     { {' ', 0x000000FF}, {'x', 0x00FF00FF} },
@@ -291,8 +291,8 @@ void test_draw_circle(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-*/
-/*
+
+
 void test_draw_circle_clip(TestObjs *objs) {
   Picture expected = {
     { {' ', 0x000000FF}, {'x', 0x00FF00FF} },
@@ -308,8 +308,8 @@ void test_draw_circle_clip(TestObjs *objs) {
 
   check_picture(&objs->small, &expected);
 }
-*/
-/*
+
+
 void test_draw_tile(TestObjs *objs) {
   ASSERT(read_image("img/PrtMimi.png", &objs->tilemap) == IMG_SUCCESS);
 
@@ -351,8 +351,8 @@ void test_draw_tile(TestObjs *objs) {
 
   check_picture(&objs->large, &pic);
 }
-*/
-/*
+
+
 void test_draw_sprite(TestObjs *objs) {
   ASSERT(read_image("img/NpcGuest.png", &objs->spritemap) == IMG_SUCCESS);
 
@@ -396,4 +396,4 @@ void test_draw_sprite(TestObjs *objs) {
 
   check_picture(&objs->large, &pic);
 }
-*/
+
