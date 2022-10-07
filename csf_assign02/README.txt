@@ -13,3 +13,7 @@ upstream of heavily test functions.
 
 For Milestone 2: Kedar worked on in_bounds, compute_index, set_pixel and draw_pixel. 
 Dayann worked on all the gets and the blend_components function. 
+
+For Milestone 3: Kedar worked on the initial implementation for every function, and Dayann 
+resolved any and all errors found in the implementation of the functions. Dayann added more 
+tests for the functions, and added comments for each line. 

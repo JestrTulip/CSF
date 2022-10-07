@@ -433,21 +433,22 @@ square_dist:
 	push %r13
 	subq $8, %rsp 
 
-	movq %rsi, %r12 
-	movq %rcx, %r13 
+	movq %rsi, %r12 /*move y1 to r12*/
+	movq %rcx, %r13 /* move y2 to r13*/
 
-	subq %rdi, %rdx 
-	movq %rdx, %rdi 
-	call square 
+	subq %rdi, %rdx /*subtract x2-x1, store in rdx*/ 
+	movq %rdx, %rdi /*move result of substraction to first argument register rdi*/ 
+	call square /*call square with x2-x1*/ 
 
-	subq %r12, %r13 
-	movq %rax, %r12 
-	movq %r13, %rdi 
-	call square 
+	subq %r12, %r13 /*subtract y2-y1, store in r13*/ 
+	movq %rax, %r12 /*move squared result of substraction to r12*/ 
+	movq %r13, %rdi /*move result of substraction to first argument register rdi*/ 
+	call square /*call square with y2-y1*/ 
 
-	addq %r12, %rax 
+	addq %r12, %rax /*add results together and move to rax*/ 
 
-	addq $8, %rsp 
+	addq $8, %rsp /*restore stack pointer to original location*/ 
+	/*pop callee-saved registers*/ 
 	popq %r13
 	popq %r12 
 	ret 
@@ -712,10 +713,10 @@ draw_circle:
 	.globl draw_tile
 draw_tile:
 	/*Register usage
-	 * %edi - image pointer, tilemap pointer, x coord, x coord + tile width, y coord, y coord + tile height, tilemap pointer, image pointer
+	 * %rdi - image pointer, tilemap pointer, x coord, x coord + tile width, y coord, y coord + tile height, tilemap pointer, image pointer
 	 * %esi - x coord, tile x, tile x + tile width, 0, bg x, fg x
 	 * %edx - y coord, tile y, tile y + tile height, image width, bg y, fg y
-	 * %ecx - tilemap pointer
+	 * %rcx - tilemap pointer
 	 * %r8 - tile pointer
 	 * %r12d - image pointer
 	 * %r13d - x coord, x index
@@ -757,19 +758,24 @@ draw_tile:
 	call in_bounds /*call in_bounds with tilemap pointer, tile x, and tile y as parameters*/
 	movl %eax, %ebp /*move in_bounds result to ebp*/
 
-	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add tile width to tile x*/
-	subl $1, %edx /*subtract one from tile x + tile height*/
-	call in_bounds /*call in_bounds with tilemap pointer, tile x + tile height - 1, and tile y as parameters*/
-	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
-
-	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
 	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add tile height to tile y*/
 	subl $1, %edx /*subtract one from tile y + tile height*/
 	call in_bounds /*call in_bounds with tilemap pointer, tile x, and tile y + tile height - 1 as parameters*/
-	and %eax, %ebp /*and in_bounds result ro previous in_bound results*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
 
-	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add tile width to tile x*/
-	subl $1, %edx /*subtract one from tile x + tile height*/
+	movl RECT_X_OFFSET(%rbx), %esi /*move tile x to second argument register esi*/
+	addl RECT_WIDTH_OFFSET(%rbx), %esi /*add tile width to tile x*/
+	movl RECT_Y_OFFSET(%rbx), %edx /*move tile y to third argument register edx*/ 
+	subl $1, %esi /*subtract one from tile x + tile width*/
+	call in_bounds /*call in_bounds with tilemap pointer, tile x, and tile y + tile height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound results*/
+
+	movl RECT_X_OFFSET(%rbx), %esi
+	movl RECT_Y_OFFSET(%rbx), %edx
+	addl RECT_WIDTH_OFFSET(%rbx), %esi /*add tile width to tile x*/
+	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add tile height to tile y*/ 
+	subl $1, %edx /*subtract one from tile y + tile height*/
+	subl $1, %esi /*subtract one from tile x + tile width*/
 	call in_bounds /*call in_bounds with tilemap pointer, tile x + tile width - 1, and tile y + tile height - 1 as parameters*/
 	and %eax, %ebp /*and in_bounds result to previous in_bound results*/
 
@@ -856,6 +862,7 @@ draw_tile:
 
 .Lexit_x_tileloop:
 	addq $40, %rsp /*restore stack pointer to original location*/
+	/* pop r12, r13, r14, r15, rbx, and rbp to restore values*/
 	popq %rbp
 	popq %rbx
 	popq %r15
@@ -867,6 +874,7 @@ draw_tile:
 
 .Ltile_out_of_bounds:
 	addq $40, %rsp /*restore stack pointer to original location*/
+	/* pop r12, r13, r14, r15, rbx, and rbp to restore values*/
 	popq %rbp
 	popq %rbx
 	popq %r15
@@ -939,19 +947,22 @@ draw_sprite:
 	call in_bounds /*call in_bounds with spritemap pointer, sprite x, and sprite y as parameters*/
 	movl %eax, %ebp /*move in_bounds result to ebp*/
 
-	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add sprite width to tile x*/
-	subl $1, %edx /*subtract one from sprite x + sprite height*/
-	call in_bounds /*call in_bounds with spritemap pointer, tile x + tile height - 1, and sprite y as parameters*/
-	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
-
-	movl RECT_X_OFFSET(%rbx), %esi /*move sprite x to second argument register esi*/
 	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add sprite height to tile y*/
 	subl $1, %edx /*subtract one from sprite y + sprite height*/
+	call in_bounds /*call in_bounds with spritemap pointer, sprite->x, and sprite->y + sprite->height - 1 as parameters*/
+	and %eax, %ebp /*and in_bounds result to previous in_bound result*/
+
+	movl RECT_Y_OFFSET(%rbx), %edx /*move sprite y to second argument register edx*/
+	addl RECT_WIDTH_OFFSET(%rbx), %esi /*add sprite width to tile x*/
+	subl $1, %edx /*subtract one from sprite x + sprite width*/
 	call in_bounds /*call in_bounds with spritemap pointer, sprite x, and sprite y + sprite height - 1 as parameters*/
 	and %eax, %ebp /*and in_bounds result ro previous in_bound results*/
 
-	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add sprite width to tile x*/
-	subl $1, %edx /*subtract one from sprite x + sprite height*/
+
+	
+	movl RECT_Y_OFFSET(%rbx), %edx
+	addl RECT_HEIGHT_OFFSET(%rbx), %edx /*add tile height to tile y*/ 
+	subl $1, %edx /*subtract one from tile y + tile height*/
 	call in_bounds /*call in_bounds with spritemap pointer, sprite x + sprite width - 1, and sprite y + sprite height - 1 as parameters*/
 	and %eax, %ebp /*and in_bounds result to previous in_bound results*/
 
@@ -1033,6 +1044,7 @@ draw_sprite:
 
 .Lexit_x_spriteloop:
 	addq $40, %rsp /*restore stack pointer to original location*/
+	/* pop r12, r13, r14, r15, rbx, and rbp to restore values*/
 	popq %rbp
 	popq %rbx
 	popq %r15
@@ -1044,6 +1056,7 @@ draw_sprite:
 
 .Lsprite_out_of_bounds:
 	addq $40, %rsp /*restore stack pointer to original location*/
+	/* pop r12, r13, r14, r15, rbx, and rbp to restore values*/
 	popq %rbp
 	popq %rbx
 	popq %r15
