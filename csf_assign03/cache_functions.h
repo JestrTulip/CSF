@@ -1,9 +1,7 @@
 #ifndef CACHE_FUNCTIONS_H
 #define CACHE_FUNCTIONS_H
 
-#include <stdint.h>
-
-
+int check_power_of_2(int val);
 
 
 
