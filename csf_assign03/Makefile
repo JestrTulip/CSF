@@ -7,7 +7,7 @@ CFLAGS = $(CONSERVATIVE_FLAGS) $(DEBUGGING_FLAGS)
 
 # Links together files needed to create executable
 csim: csim.o cache_functions.o
-	$(CC) -o main main.o functions.o
+	$(CC) -o main main.o cache_functions.o
 
 # Compiles mainFile.c to create mainFile.o
 # Note that we list functions.h here as a file that
