@@ -1,8 +1,25 @@
 #include "cache_functions.cpp"
 #include <iostream>
 #include <cstring>
+#include <vector>
 
 using namespace std;
+using std::vector;
+
+struct Slot { 
+    uint32_t tag;
+    bool valid;
+    uint32_t load_ts, access_ts;
+
+}; 
+
+struct Set {
+    vector<Slot> slots;
+}; 
+
+struct Cache { 
+    vector<Set> sets; 
+}; 
 
 int main(int argc, char **argv){
     
@@ -27,9 +44,5 @@ int main(int argc, char **argv){
     bool write_allocate = !strcmp(argv[4], "write_allocate");
     bool write_through = !strcmp(argv[5], "write_through");
     bool lru = !strcmp(argv[6], "lru");
-    
-    new Cache cache;
-
-
 
 }
