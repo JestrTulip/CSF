@@ -1,25 +1,8 @@
-#include "cache_functions.cpp"
+#include "cache_functions.h"
 #include <iostream>
 #include <cstring>
-#include <vector>
 
 using namespace std;
-using std::vector;
-
-struct Slot { 
-    uint32_t tag;
-    bool valid;
-    uint32_t load_ts, access_ts;
-
-}; 
-
-struct Set {
-    vector<Slot> slots;
-}; 
-
-struct Cache { 
-    vector<Set> sets; 
-}; 
 
 int main(int argc, char **argv){
     
@@ -33,10 +16,12 @@ int main(int argc, char **argv){
         || !(!strcmp(argv[4], "write_allocate") || !strcmp(argv[4], "no_write_allocate"))
         || !(!strcmp(argv[5], "write_through") || !strcmp(argv[5], "write_back"))
         || !(!strcmp(argv[6], "lru") || !strcmp(argv[6], "fifo"))){
+            //IS THIS AN ERROR CONDITION
         return 0;
     }
 
     if(!strcmp(argv[4], "no_write_allocate") && !strcmp(argv[5], "write_back")){
+        //DIDNT WE CHECK THIS? 
         return 0;
     }
 
