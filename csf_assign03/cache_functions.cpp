@@ -40,7 +40,36 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
     return address >> (32 - set_num);
 }
 
-bool store_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
+bool store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
-void load_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+uint32_t load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
+    uint32_t loadStatus = 0;
+    std::vector<Slot>::iterator evicted;
+    uint32_t maxload_ts = 0;
+    uint32_t currtag = get_tag(address, set_num, block_size);
+    uint32_t currindex = get_index(address, set_num, block_size);
+    for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
+        if(currindex == it->index) {
+            for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
+                if(it2->load_ts > maxload_ts) { evicted = it2; }
+            
+                it2->load_ts+=1;
+                it2->access_ts+=1;
+                if(currtag == it2->tag){
+                    it2->load_ts = 0;
+                    it2->access_ts = 0;
+                    loadStatus = 1;
+                }
+            }
+
+            //tag not found so a slot must be evicted
+            if(!loadStatus){
+                evicted->tag = currtag;
+                evicted->load_ts = 0;
+                evicted->access_ts = 0;
+            }
+        }
+    }
+    return loadStatus;
+}
 

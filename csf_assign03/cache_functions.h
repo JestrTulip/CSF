@@ -13,6 +13,7 @@ struct Slot {
 }; 
 
 struct Set {
+    uint32_t index;
     std::vector<Slot> slots;
 }; 
 
@@ -30,6 +31,6 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
 
 bool store_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
-void load_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+uint32_t load_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
 
 #endif // CACHE_FUNCTIONS_H
