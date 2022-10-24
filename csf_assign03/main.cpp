@@ -34,8 +34,11 @@ int main(int argc, char **argv){
     string line; 
 
 
-    while (std::getline(cin, line)) {
-        std::pair<string, uint64_t> args = read_line(line); 
+    while (getline(cin, line)) {
+        pair<string, uint64_t> args = read_line(line); 
+        if (args.first[0] == 's' ) {
+            
+        }
     }
 
 }
