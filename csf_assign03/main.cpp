@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 
+
 using namespace std;
 
 int main(int argc, char **argv){
@@ -29,5 +30,12 @@ int main(int argc, char **argv){
     bool write_allocate = !strcmp(argv[4], "write_allocate");
     bool write_through = !strcmp(argv[5], "write_through");
     bool lru = !strcmp(argv[6], "lru");
+
+    string line; 
+
+
+    while (std::getline(cin, line)) {
+        std::pair<string, uint64_t> args = read_line(line); 
+    }
 
 }

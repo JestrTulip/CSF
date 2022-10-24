@@ -2,6 +2,8 @@
 #define CACHE_FUNCTIONS_H
 #include <stdint.h>
 #include <vector>
+#include <utility>
+#include <string>
 
 
 struct Slot { 
@@ -17,6 +19,8 @@ struct Set {
 struct Cache { 
     std::vector<Set> sets; 
 }; 
+
+std::pair<std::string, std::uint64_t> read_line(std::string line); 
 
 int check_power_of_2(int val);
 
