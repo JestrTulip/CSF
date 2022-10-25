@@ -52,6 +52,6 @@ int main(int argc, char **argv){
             cycles_total += std::get<2>(stats);
         }
     }
-    printf("Total loads: %u\nTotal stores: %n\nLoad hits: %n\nLoad misses: %n\nStore hits: %n\nStore misses: %n\nTotal cycles: %d\n", 
+    printf("Total loads: %u\nTotal stores: %u\nLoad hits: %u\nLoad misses: %u\nStore hits: %u\nStore misses: %u\nTotal cycles: %d\n", 
     load_hits+load_misses, store_hits+store_misses, load_hits, load_misses, store_hits, store_misses, cycles_total);
 }

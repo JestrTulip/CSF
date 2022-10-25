@@ -36,7 +36,7 @@ int check_power_of_2(int val);
 
 uint32_t get_tag(uint32_t address, uint32_t set_num, uint32_t block_size); 
 
-uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
+int32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
 
 void incrementTime(Cache cache); 
 
