@@ -5,6 +5,10 @@
 #include <tuple> 
 #include <utility>
 #include <string>
+#include <iostream>
+#include <cmath>
+#include <sstream>
+#include <cstring>
 
 
 struct Slot { 
@@ -23,6 +27,8 @@ struct Cache {
 }; 
 
 Cache populate_cache(uint32_t set_num, uint32_t block_size); 
+
+int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size);
 
 std::pair<std::string, std::uint64_t> read_line(std::string line); 
 

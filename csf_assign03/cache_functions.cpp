@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <cstring>
 
 
 using std::vector; 
@@ -15,6 +16,13 @@ int check_power_of_2(int val){
 	else { 
         return 0;
     }
+}
+
+int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size) { 
+    return argc !=7 || !check_power_of_2(set_num) || !check_power_of_2(block_num) || !check_power_of_2(block_size) || (block_size < 4)
+        || !(!strcmp(argv[4], "write_allocate") || !strcmp(argv[4], "no_write_allocate"))
+        || !(!strcmp(argv[5], "write_through") || !strcmp(argv[5], "write_back"))
+        || !(!strcmp(argv[6], "lru") || !strcmp(argv[6], "fifo"));
 }
 
 Cache populate_cache(uint32_t set_num, uint32_t block_size) {
