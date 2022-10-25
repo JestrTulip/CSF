@@ -33,12 +33,30 @@ int main(int argc, char **argv){
 
     string line; 
 
+    std::tuple<uint32_t, uint32_t, uint32_t> stats;
+    uint32_t load_hits = 0;
+    uint32_t load_misses = 0;
+    uint32_t store_hits = 0;
+    uint32_t store_misses = 0;
+    uint32_t cycles_total = 0;
+
+
+    Cache cache = populate_cache(set_num, block_size);
 
     while (getline(cin, line)) {
         pair<string, uint64_t> args = read_line(line); 
         if (args.first[0] == 's' ) {
-            
+            stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru);
+            store_hits += std::get<0>(stats);
+            store_misses += std::get<1>(stats);
+            cycles_total += std::get<2>(stats);
+        } else if (args.first[0] == 'l' ) {
+            stats = load_to_cache(cache, args.second, set_num, block_size, lru);
+            load_hits += std::get<0>(stats);
+            load_misses += std::get<1>(stats);
+            cycles_total += std::get<2>(stats);
         }
     }
-
+    printf("Total loads: %u\nTotal stores: %n\nLoad hits: %n\nLoad misses: %n\nStore hits: %n\nStore misses: %n\nTotal cycles: %d\n", 
+    load_hits+load_misses, store_hits+store_misses, load_hits, load_misses, store_hits, store_misses, cycles_total);
 }
