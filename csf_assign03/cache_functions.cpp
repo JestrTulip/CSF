@@ -152,6 +152,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
         } //add to cycles
         evicted->tag = currtag;
         evicted->load_ts = 0;
+
     }
     return {loadHit, loadMiss, cycles};
 }
