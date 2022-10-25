@@ -40,6 +40,7 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
     return address >> (32 - set_num);
 }
 
+
 bool store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
 uint32_t load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
@@ -48,10 +49,18 @@ uint32_t load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t
     uint32_t maxload_ts = 0;
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
+
+    //find the set with the correct index
+    // iterate through the slots that the set has for the right tag 
+    // if you find the tag, load hit = update access ts.
+    // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
+    // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
     for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
         if(currindex == it->index) {
             for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-                if(it2->load_ts > maxload_ts) { evicted = it2; }
+                if(it2->load_ts > maxload_ts) { 
+                    evicted = it2; 
+                }
             
                 it2->load_ts+=1;
                 it2->access_ts+=1;
