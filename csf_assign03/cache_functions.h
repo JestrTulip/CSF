@@ -111,8 +111,11 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
  * 
  * Parameters:
  *  cache - cache to increment time in
+ *  
+ * Returns:
+ *  incremented cache
  */
-void incrementTime(Cache cache); 
+Cache incrementTime(Cache cache); 
 
 
 /* Function to perform a store to cache

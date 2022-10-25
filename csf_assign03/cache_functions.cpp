@@ -55,8 +55,7 @@ std::pair<std::string, std::uint64_t> read_line(std::string line) {
     is >> f_field;  
     action = f_field; 
     is >> f_field; 
-    block = std::stoi(f_field, nullptr, 16);
-    is >> f_field;
+    block = std::stoll(f_field, nullptr, 16);
 
     return {action, block}; 
 
@@ -80,7 +79,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
 
-    incrementTime(cache);
+    cache = incrementTime(cache);
     
     //can get set using Set &s = cache.sets[index];
     
@@ -129,7 +128,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
     // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
     // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
 
-    incrementTime(cache);
+    cache = incrementTime(cache);
 
     for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
         if(currtag == it->tag && it->valid){
@@ -148,19 +147,22 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
                 evicted = it;
             }
         }
-        if(evicted->dirty) { cycles += 100 * block_size / 4;} //add to cycles
+        if(evicted->dirty) { 
+            cycles += 100 * block_size / 4;
+        } //add to cycles
         evicted->tag = currtag;
         evicted->load_ts = 0;
     }
     return {loadHit, loadMiss, cycles};
 }
 
-void incrementTime(Cache cache){
+Cache incrementTime(Cache cache){
     for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
         for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
             it2->load_ts+=1;
             it2->access_ts+=1;
         }
     }
+    return cache;
 }
 
