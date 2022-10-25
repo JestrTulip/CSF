@@ -26,7 +26,7 @@ int check_error_conditions(int argc, char **argv, int set_num, int block_num, in
 }
 
 Cache populate_cache(uint32_t set_num, uint32_t block_num) {
-    Slot slot = {0,0,0,0}; 
+    Slot slot = {0,0,0,0,0}; 
     
     Set sets; 
     //sets.index = -1; 
@@ -50,28 +50,25 @@ std::pair<std::string, std::uint64_t> read_line(std::string line) {
 
     std::string action; 
     std::uint64_t block; 
-    int val; 
+    
 
     is >> f_field;  
     action = f_field; 
     is >> f_field; 
-    block = std::stoi(f_field, 0, 16);
-    is >>f_field;
-    val = std::stoi(f_field); 
+    block = std::stoi(f_field, nullptr, 16);
+    is >> f_field;
 
     return {action, block}; 
 
-
-    return {action, block}; 
 }
 
 uint32_t get_tag(uint32_t address, uint32_t set_num, uint32_t block_size){
-    return address >> (set_num + block_size);
+    return address >> (uint32_t) (log2(set_num) + log2(block_size));
 }
 
-int32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
-    address = address << (32 - set_num - block_size);
-    return address >> (32 - set_num);
+uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
+    address = address << (uint32_t) (32 - log2(set_num) - log2(block_size));
+    return address >> (uint32_t) (32 - log2(set_num));
 }
 
 
@@ -81,7 +78,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
     uint32_t cycles = 0;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
-    int32_t currindex = get_index(address, set_num, block_size);
+    uint32_t currindex = get_index(address, set_num, block_size);
 
     incrementTime(cache);
     
@@ -94,12 +91,13 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
                     storeHit = 1;
                     cycles += 100;
             } else {
-                it->valid = 0;
+                it->dirty = 1;
             } 
         }
      }
 
         if(!storeHit){
+            storeMiss++; 
             if(write_allocate){
                 std::tuple <uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
                 cycles += std::get<2>(load);
@@ -121,7 +119,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
     uint32_t maxaccess_ts = 0;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
-    int32_t currindex = get_index(address, set_num, block_size);
+    uint32_t currindex = get_index(address, set_num, block_size);
     
     
 
@@ -134,7 +132,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
     incrementTime(cache);
 
     for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
-        if(currtag == it->tag){
+        if(currtag == it->tag && it->valid){
             it->access_ts = 0;
             loadHit = 1;
             cycles += 100 * block_size / 4;
@@ -150,7 +148,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
                 evicted = it;
             }
         }
-        if(!evicted->valid) { cycles += 100 * block_size / 4;} //add to cycles
+        if(evicted->dirty) { cycles += 100 * block_size / 4;} //add to cycles
         evicted->tag = currtag;
         evicted->load_ts = 0;
     }
