@@ -5,6 +5,8 @@
 
 
 using std::vector; 
+using std::pair;
+using std::tuple; 
 
 int check_power_of_2(int val){
     if(ceil(log2(val))== floor(log2(val))) { 
@@ -38,14 +40,13 @@ std::pair<std::string, std::uint64_t> read_line(std::string line) {
 
     std::string action; 
     std::uint64_t block; 
-    int val; 
+    
 
     is >> f_field;  
     action = f_field; 
     is >> f_field; 
     block = std::stoi(f_field, nullptr, 256);
-    is >>f_field;
-    val = std::stoi(f_field); 
+    is >> f_field;
 
     return {action, block}; 
 }
@@ -86,14 +87,15 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
 
             if(!storeHit){
                 if(write_allocate){
-                    std::tuple<uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
-                    cycles += get<2>(load);
+                    std::tuple <uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
+                    cycles += std::get<2>(load);
                 } else {
                     cycles += 100 * block_size / 4;
                 }
             }
         }
     }
+    return {storeHit, storeMiss, cycles};
 }
 
 std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
@@ -128,10 +130,10 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
             }
 
             //tag not found so a slot must be evicted
-            if(!loadHit){
+            if(!loadHit && lru){
                 for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
                     if(it2->access_ts > maxaccess_ts){
-                        maxload_ts = it2->access_ts;
+                        maxaccess_ts = it2->access_ts;
                         evicted = it2;
                     }
                 }
