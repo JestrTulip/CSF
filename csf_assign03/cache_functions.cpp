@@ -17,11 +17,11 @@ int check_power_of_2(int val){
         return 0;
     }
 }
-
+//argc 8
 int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size) { 
-    return argc !=7 || !check_power_of_2(set_num) || !check_power_of_2(block_num) || !check_power_of_2(block_size) || (block_size < 4)
-        || !(!strcmp(argv[4], "write_allocate") || !strcmp(argv[4], "no_write_allocate"))
-        || !(!strcmp(argv[5], "write_through") || !strcmp(argv[5], "write_back"))
+    return argc != 7  || !check_power_of_2(set_num) || !check_power_of_2(block_num) || !check_power_of_2(block_size) || (block_size < 4)
+        || !(!strcmp(argv[4], "write-allocate") || !strcmp(argv[4], "no-write-allocate"))
+        || !(!strcmp(argv[5], "write-through") || !strcmp(argv[5], "write-back"))
         || !(!strcmp(argv[6], "lru") || !strcmp(argv[6], "fifo"));
 }
 
@@ -29,7 +29,6 @@ Cache populate_cache(uint32_t set_num, uint32_t block_num) {
     Slot slot = {0,0,0,0}; 
     
     Set sets; 
-    sets.index = -1; 
     vector<Slot> slotsList(block_num);
     fill(slotsList.begin(), slotsList.end(),slot);
     sets.slots = slotsList; 
@@ -43,18 +42,24 @@ Cache populate_cache(uint32_t set_num, uint32_t block_num) {
 }
 
 std::pair<std::string, std::uint64_t> read_line(std::string line) {
+
+
     std::istringstream is(line);
     std::string f_field; 
 
     std::string action; 
     std::uint64_t block; 
-    
+    int val; 
 
     is >> f_field;  
     action = f_field; 
     is >> f_field; 
-    block = std::stoi(f_field, nullptr, 256);
-    is >> f_field;
+    block = std::stoi(f_field, nullptr, 16);
+    is >>f_field;
+    val = std::stoi(f_field); 
+
+    return {action, block}; 
+
 
     return {action, block}; 
 }
@@ -78,31 +83,31 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
     int32_t currindex = get_index(address, set_num, block_size);
 
     incrementTime(cache);
+    
+    //can get set using Set &s = cache.sets[index];
+    
+    for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
+        if(currtag == it2->tag && it2->valid){
+            if(write_through){
+                it2->access_ts = 0;
+                    storeHit = 1;
+                    cycles += 100;
+            } else {
+                it2->valid = 0;
+            } 
+        }
+     }
 
-    for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
-        if(currindex == it->index) {
-            for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-                if(currtag == it2->tag){
-                    if(write_through){
-                        it2->access_ts = 0;
-                        storeHit = 1;
-                        cycles += 100;
-                    } else {
-                        it2->valid = 0;
-                    } 
-                }
-            }
-
-            if(!storeHit){
-                if(write_allocate){
-                    std::tuple <uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
-                    cycles += std::get<2>(load);
-                } else {
-                    cycles += 100 * block_size / 4;
-                }
+        if(!storeHit){
+            if(write_allocate){
+                std::tuple <uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
+                cycles += std::get<2>(load);
+            } else {
+                cycles += 100 * block_size / 4;
             }
         }
-    }
+        
+    
     return {storeHit, storeMiss, cycles};
 }
 
@@ -139,6 +144,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
 
             //tag not found so a slot must be evicted
             if(!loadHit && lru){
+                loadMiss = 1;
                 for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
                     if(it2->access_ts > maxaccess_ts){
                         maxaccess_ts = it2->access_ts;

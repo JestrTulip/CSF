@@ -21,6 +21,7 @@
 struct Slot { 
     uint32_t tag;
     bool valid;
+    bool dirty; 
     uint32_t load_ts, access_ts;
 }; 
 
@@ -31,7 +32,7 @@ struct Slot {
  *  slots - vector containing slots in the set
  */
 struct Set {
-    int32_t index;
+    //possibly a map of tag to index of efficiency 
     std::vector<Slot> slots;
 }; 
 

@@ -7,9 +7,9 @@ int main(int argc, char **argv){
     
     //check if args are integers
 
-    int set_num = (int) *argv[1];
-    int block_num = (int) *argv[2];
-    int block_size = (int) *argv[3];
+    int set_num = stoi(argv[1]);
+    int block_num = stoi(argv[2]);
+    int block_size =  stoi(argv[3]);
 
     if(check_error_conditions(argc, argv, set_num, block_num, block_size)){
         cerr << "ERROR: Invalid cache design parameters"; 
@@ -39,6 +39,9 @@ int main(int argc, char **argv){
     Cache cache = populate_cache(set_num, block_size);
 
     while (getline(cin, line)) {
+        if (line.length() == 0) { 
+            break; 
+        }
         pair<string, uint64_t> args = read_line(line); 
         if (args.first[0] == 's' ) {
             stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru);
