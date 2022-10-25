@@ -71,7 +71,7 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
 }
 
 
-std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru){
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru){
     uint32_t storeHit = 0;
     uint32_t storeMiss = 0;
     uint32_t cycles = 0;
@@ -106,15 +106,16 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
         }
         
     
-    return {storeHit, storeMiss, cycles};
+    return {cache, storeHit, storeMiss, cycles};
 }
 
-std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
     uint32_t loadHit = 0;
     uint32_t loadMiss = 0;
     uint32_t cycles = 0;
 
-    std::vector<Slot>::iterator evicted;
+    uint32_t index = 0;
+    uint32_t evicted = 0;
     uint32_t maxaccess_ts = 0;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
@@ -144,17 +145,18 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
         for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
             if(it->access_ts > maxaccess_ts){
                 maxaccess_ts = it->access_ts;
-                evicted = it;
+                evicted = index;
             }
+            index+=1;
         }
         if(evicted->dirty) { 
             cycles += 100 * block_size / 4;
         } //add to cycles
-        evicted->tag = currtag;
-        evicted->load_ts = 0;
+        cache.sets[currindex].slots[evicted].tag = currtag;
+        cache.sets[currindex].slots[evicted].load_ts = 0;
 
     }
-    return {loadHit, loadMiss, cycles};
+    return {cache, loadHit, loadMiss, cycles};
 }
 
 Cache incrementTime(Cache cache){

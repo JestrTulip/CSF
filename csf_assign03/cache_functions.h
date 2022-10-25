@@ -130,9 +130,9 @@ Cache incrementTime(Cache cache);
  *  lru - true if cache is lru, false if cache is fifo
  * 
  * Returns:
- *  tuple containing store hits, store misses, and cycles
+ *  tuple containing updated cache, store hits, store misses, and cycles
  */
-std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
 
 /* Function to perform a load to cache
@@ -147,9 +147,9 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
  *  lru - true if cache is lru, false if cache is fifo
  * 
  * Returns:
- *  tuple containing load hits, load misses, and cycles
+ *  tuple containing updated cache, load hits, load misses, and cycles
  */
-std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
 
 
 #endif // CACHE_FUNCTIONS_H
