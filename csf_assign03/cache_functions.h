@@ -13,13 +13,15 @@ struct Slot {
 }; 
 
 struct Set {
-    uint32_t index;
+    int32_t index;
     std::vector<Slot> slots;
 }; 
 
 struct Cache { 
     std::vector<Set> sets; 
 }; 
+
+Cache populate_cache(uint32_t set_num, uint32_t block_size); 
 
 std::pair<std::string, std::uint64_t> read_line(std::string line); 
 
@@ -29,8 +31,10 @@ uint32_t get_tag(uint32_t address, uint32_t set_num, uint32_t block_size);
 
 uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size); 
 
+
 bool store_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
 uint32_t load_to_cache(uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+
 
 #endif // CACHE_FUNCTIONS_H

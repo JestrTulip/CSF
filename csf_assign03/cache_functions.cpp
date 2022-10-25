@@ -4,6 +4,8 @@
 #include <sstream>
 
 
+using std::vector; 
+
 int check_power_of_2(int val){
     if(ceil(log2(val))== floor(log2(val))) { 
         return 1;
@@ -11,6 +13,23 @@ int check_power_of_2(int val){
 	else { 
         return 0;
     }
+}
+
+Cache populate_cache(uint32_t set_num, uint32_t block_size) {
+    Slot slot = {0,0,0,0}; 
+    
+    Set sets; 
+    sets.index = -1; 
+    vector<Slot> slotsList(block_size);
+    fill(slotsList.begin(), slotsList.end(),slot);
+    sets.slots = slotsList; 
+    
+    vector<Set> setsList(set_num);
+    fill(setsList.begin(), setsList.end(),sets);
+    Cache finalCache;
+    finalCache.sets = setsList;
+    
+    return finalCache;
 }
 
 std::pair<std::string, std::uint64_t> read_line(std::string line) {
@@ -39,7 +58,6 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
     address = address << (32 - set_num - block_size);
     return address >> (32 - set_num);
 }
-
 
 bool store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
 
