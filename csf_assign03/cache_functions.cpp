@@ -41,44 +41,96 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
 }
 
 
-bool store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
+std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru){
+    uint32_t storeHit = 0;
+    uint32_t storeMiss = 0;
+    uint32_t cycles = 0;
 
-uint32_t load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
-    uint32_t loadStatus = 0;
-    std::vector<Slot>::iterator evicted;
-    uint32_t maxload_ts = 0;
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
+
+    incrementTime(cache);
+
+    for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
+        if(currindex == it->index) {
+            for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
+                if(currtag == it2->tag){
+                    if(write_through){
+                        it2->access_ts = 0;
+                        storeHit = 1;
+                        cycles += 100;
+                    } else {
+                        it2->valid = 0;
+                    } 
+                }
+            }
+
+            if(!storeHit){
+                if(write_allocate){
+                    std::tuple<uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
+                    cycles += get<2>(load);
+                } else {
+                    cycles += 100 * block_size / 4;
+                }
+            }
+        }
+    }
+}
+
+std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
+    uint32_t loadHit = 0;
+    uint32_t loadMiss = 0;
+    uint32_t cycles = 0;
+
+    std::vector<Slot>::iterator evicted;
+    uint32_t maxaccess_ts = 0;
+
+    uint32_t currtag = get_tag(address, set_num, block_size);
+    uint32_t currindex = get_index(address, set_num, block_size);
+    
+    
 
     //find the set with the correct index
     // iterate through the slots that the set has for the right tag 
     // if you find the tag, load hit = update access ts.
     // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
     // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
+
+    incrementTime(cache);
+
     for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
-        if(currindex == it->index) {
+        if(currindex == it->index || it->index < 0) {
             for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-                if(it2->load_ts > maxload_ts) { 
-                    evicted = it2; 
-                }
-            
-                it2->load_ts+=1;
-                it2->access_ts+=1;
                 if(currtag == it2->tag){
-                    it2->load_ts = 0;
                     it2->access_ts = 0;
-                    loadStatus = 1;
+                    loadHit = 1;
+                    cycles += 100 * block_size / 4;
                 }
             }
 
             //tag not found so a slot must be evicted
-            if(!loadStatus){
+            if(!loadHit){
+                for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
+                    if(it2->access_ts > maxaccess_ts){
+                        maxload_ts = it2->access_ts;
+                        evicted = it2;
+                    }
+                }
+                if(!evicted->valid) { cycles += 100 * block_size / 4;} //add to cycles
                 evicted->tag = currtag;
                 evicted->load_ts = 0;
-                evicted->access_ts = 0;
             }
         }
     }
-    return loadStatus;
+    return {loadHit, loadMiss, cycles};
+}
+
+void incrementTime(Cache cache){
+    for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
+        for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
+            it2->load_ts+=1;
+            it2->access_ts+=1;
+        }
+    }
 }
 
