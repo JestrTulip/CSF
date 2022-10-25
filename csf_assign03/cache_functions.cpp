@@ -86,14 +86,14 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
     
     //can get set using Set &s = cache.sets[index];
     
-    for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-        if(currtag == it2->tag && it2->valid){
+    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+        if(currtag == it->tag && it->valid){
             if(write_through){
-                it2->access_ts = 0;
+                it->access_ts = 0;
                     storeHit = 1;
                     cycles += 100;
             } else {
-                it2->valid = 0;
+                it->valid = 0;
             } 
         }
      }
@@ -133,28 +133,26 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t add
     incrementTime(cache);
 
     for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
-        if(currindex == it->index || it->index < 0) {
-            for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-                if(currtag == it2->tag){
-                    it2->access_ts = 0;
-                    loadHit = 1;
-                    cycles += 100 * block_size / 4;
-                }
+        for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+            if(currtag == it->tag){
+                it->access_ts = 0;
+                loadHit = 1;
+                cycles += 100 * block_size / 4;
             }
+        }
 
-            //tag not found so a slot must be evicted
-            if(!loadHit && lru){
-                loadMiss = 1;
-                for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
-                    if(it2->access_ts > maxaccess_ts){
-                        maxaccess_ts = it2->access_ts;
-                        evicted = it2;
-                    }
+        //tag not found so a slot must be evicted
+        if(!loadHit && lru){
+            loadMiss = 1;
+            for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+                if(it->access_ts > maxaccess_ts){
+                    maxaccess_ts = it->access_ts;
+                    evicted = it;
                 }
-                if(!evicted->valid) { cycles += 100 * block_size / 4;} //add to cycles
-                evicted->tag = currtag;
-                evicted->load_ts = 0;
             }
+            if(!evicted->valid) { cycles += 100 * block_size / 4;} //add to cycles
+            evicted->tag = currtag;
+            evicted->load_ts = 0;
         }
     }
     return {loadHit, loadMiss, cycles};
