@@ -17,12 +17,12 @@ int main(int argc, char **argv){
         || !(!strcmp(argv[4], "write_allocate") || !strcmp(argv[4], "no_write_allocate"))
         || !(!strcmp(argv[5], "write_through") || !strcmp(argv[5], "write_back"))
         || !(!strcmp(argv[6], "lru") || !strcmp(argv[6], "fifo"))){
-            //IS THIS AN ERROR CONDITION
+            cerr << "ERROR: Invalid cache design parameters"; 
         return 0;
     }
 
     if(!strcmp(argv[4], "no_write_allocate") && !strcmp(argv[5], "write_back")){
-        //DIDNT WE CHECK THIS? 
+        cerr << "Error: Invalid design parameter combination"; 
         return 0;
     }
 
