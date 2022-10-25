@@ -26,7 +26,16 @@ struct Cache {
     std::vector<Set> sets; 
 }; 
 
-Cache populate_cache(uint32_t set_num, uint32_t block_size); 
+/*Function to poulate cache with empty slots
+ * 
+ * Parameters:
+ *  set_num - number of sets in the cache
+ *  block_num - number of slots in each set
+ * 
+ * Returns:
+ *  Cache with certaine number of clots containing empty slots
+ */
+Cache populate_cache(uint32_t set_num, uint32_t block_num); 
 
 int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size);
 

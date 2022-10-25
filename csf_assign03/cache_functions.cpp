@@ -25,12 +25,12 @@ int check_error_conditions(int argc, char **argv, int set_num, int block_num, in
         || !(!strcmp(argv[6], "lru") || !strcmp(argv[6], "fifo"));
 }
 
-Cache populate_cache(uint32_t set_num, uint32_t block_size) {
+Cache populate_cache(uint32_t set_num, uint32_t block_num) {
     Slot slot = {0,0,0,0}; 
     
     Set sets; 
     sets.index = -1; 
-    vector<Slot> slotsList(block_size);
+    vector<Slot> slotsList(block_num);
     fill(slotsList.begin(), slotsList.end(),slot);
     sets.slots = slotsList; 
     
