@@ -16,7 +16,7 @@ int main(int argc, char **argv){
         return 0;
     }
 
-    if(!strcmp(argv[4], "no_write_allocate") && !strcmp(argv[5], "write_back")){
+    if(!strcmp(argv[4], "no-write_allocate") && !strcmp(argv[5], "write_back")){
         cerr << "Error: Invalid design parameter combination"; 
         return 0;
     }

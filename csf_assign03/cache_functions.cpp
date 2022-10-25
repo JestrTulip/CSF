@@ -29,7 +29,7 @@ Cache populate_cache(uint32_t set_num, uint32_t block_num) {
     Slot slot = {0,0,0,0}; 
     
     Set sets; 
-    sets.index = -1; 
+    //sets.index = -1; 
     vector<Slot> slotsList(block_num);
     fill(slotsList.begin(), slotsList.end(),slot);
     sets.slots = slotsList; 
@@ -55,7 +55,7 @@ std::pair<std::string, std::uint64_t> read_line(std::string line) {
     is >> f_field;  
     action = f_field; 
     is >> f_field; 
-    block = std::stoi(f_field, nullptr, 16);
+    block = std::stoi(f_field, 0, 16);
     is >>f_field;
     val = std::stoi(f_field); 
 
