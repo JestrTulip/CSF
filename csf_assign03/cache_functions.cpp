@@ -29,6 +29,7 @@ Cache populate_cache(uint32_t set_num, uint32_t block_num) {
     Slot slot = {0,0,0,0}; 
     
     Set sets; 
+    sets.index = -1; 
     vector<Slot> slotsList(block_num);
     fill(slotsList.begin(), slotsList.end(),slot);
     sets.slots = slotsList; 
@@ -84,8 +85,8 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t ad
 
     incrementTime(cache);
     
-    //can get set using Set &s = cache.sets[index];
-    
+    //can get using Set &s = cache.sets[index];
+
     for (std::vector<Slot>::iterator it2 = it->slots.begin() ; it2 != it->slots.end(); ++it2) {
         if(currtag == it2->tag && it2->valid){
             if(write_through){

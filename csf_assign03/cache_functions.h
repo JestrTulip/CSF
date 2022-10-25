@@ -33,6 +33,7 @@ struct Slot {
  */
 struct Set {
     //possibly a map of tag to index of efficiency 
+    //int32_t index; apparently not necessary
     std::vector<Slot> slots;
 }; 
 
