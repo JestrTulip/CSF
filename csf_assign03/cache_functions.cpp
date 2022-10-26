@@ -62,12 +62,22 @@ std::pair<std::string, std::uint64_t> read_line(std::string line) {
 }
 
 uint32_t get_tag(uint32_t address, uint32_t set_num, uint32_t block_size){
-    return address >> (uint32_t) (log2(set_num) + log2(block_size));
+    if(set_num == 1){
+        return address >> (uint32_t) (log2(block_size));
+    } else {
+        return address >> (uint32_t) (log2(set_num) + log2(block_size));
+    }
+    
 }
 
 uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
-    address = address << (uint32_t) (32 - log2(set_num) - log2(block_size));
-    return address >> (uint32_t) (32 - log2(set_num));
+    if(set_num == 1){
+        return 0;
+    } else {
+        address = address << (uint32_t) (32 - log2(set_num) - log2(block_size));
+        return address >> (uint32_t) (32 - log2(set_num));
+    }
+    
 }
 
 
@@ -137,7 +147,6 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
         if(currtag == it->tag && it->valid){
             it->access_ts = timestamp;
             loadHit = 1;
-            cycles += 100; //modified
         }
         //find slot with lowest access timestamp
         if(it->access_ts < minaccess_ts){
