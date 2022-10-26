@@ -2,6 +2,7 @@
 #define CACHE_FUNCTIONS_H
 #include <stdint.h>
 #include <vector>
+#include <map>
 #include <tuple> 
 #include <utility>
 #include <string>
@@ -14,13 +15,10 @@
  * 
  * Fields:
  *  tag - tag for identifying slot in set
- *  valid - value to show if slot is dirty or not
  *  load_ts - time stamp measuring time since loading
  *  access_ts - time stamp measuring time since last access
  */
 struct Slot { 
-    uint32_t tag;
-    bool valid;
     bool dirty; 
     uint32_t load_ts, access_ts;
 }; 
@@ -33,7 +31,7 @@ struct Slot {
  */
 struct Set {
     //possibly a map of tag to index of efficiency 
-    std::vector<Slot> slots;
+    std::map<uint32_t, Slot> slots;
 }; 
 
 /* Struct to cache
@@ -54,7 +52,7 @@ struct Cache {
  * Returns:
  *  Cache with certaine number of clots containing empty slots
  */
-Cache populate_cache(uint32_t set_num, uint32_t block_num); 
+Cache populate_cache(uint32_t set_num); 
 
 
 int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size);
@@ -121,7 +119,7 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
  * Returns:
  *  tuple containing updated cache, store hits, store misses, and cycles
  */
-std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp);
+std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp);
 
 
 /* Function to perform a load to cache
@@ -136,7 +134,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t 
  * Returns:
  *  tuple containing updated cache, load hits, load misses, and cycles
  */
-std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp);
+std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 /* Function to load a slot to cache with known slot to be evicted
  * 
@@ -151,7 +149,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
  * Returns:
  *  tuple containing updated cache and cycles
  */
-uint32_t write_allocate_load(Cache & cache, uint32_t adresss, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp);
+uint32_t write_allocate_load(Cache & cache, uint32_t adresss, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 
 /* Function to load a dirty slot to cache with known slot to be evicted
@@ -167,6 +165,6 @@ uint32_t write_allocate_load(Cache & cache, uint32_t adresss, uint32_t set_num, 
  * Returns:
  *  tuple containing updated cache and cycles
  */
-uint32_t write_allocate_dirty_load(Cache &cache, uint32_t adresss, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp);
+uint32_t write_allocate_dirty_load(Cache &cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 #endif // CACHE_FUNCTIONS_H
