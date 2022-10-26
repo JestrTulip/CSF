@@ -42,7 +42,7 @@ int main(int argc, char **argv){
     while (getline(cin, line)) {
         if (line.length() == 0) { 
             break; 
-        }
+        }      
         pair<string, uint64_t> args = read_line(line); 
         if (args.first[0] == 's' ) {
             stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru, timestamp);

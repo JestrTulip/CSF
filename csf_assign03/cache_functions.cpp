@@ -88,14 +88,14 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t 
 
     uint32_t index = 0;
     uint32_t evicted = 0;
-    uint32_t minaccess_ts = 100;
+    uint32_t minaccess_ts = -1;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
     
     //can get set using Set &s = cache.sets[index];
     
-    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); it++) {
         if(currtag == it->tag && it->valid){
             storeHit = 1;
             it->access_ts = timestamp;
@@ -138,12 +138,12 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
 
     uint32_t index = 0;
     uint32_t evicted = 0;
-    uint32_t minaccess_ts = 100;
+    uint32_t minaccess_ts = -1;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
 
-    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); it++) {
         if(currtag == it->tag && it->valid){
             it->access_ts = timestamp;
             loadHit = 1;
