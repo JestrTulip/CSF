@@ -137,7 +137,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
         if(currtag == it->tag && it->valid){
             it->access_ts = timestamp;
             loadHit = 1;
-            cycles += 100 * block_size / 4;
+            cycles += 100; //modified
         }
         //find slot with lowest access timestamp
         if(it->access_ts < minaccess_ts){
@@ -151,7 +151,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
     if(!loadHit && lru){
         loadMiss = 1;
         if(cache.sets[currindex].slots[evicted].dirty) { 
-            cycles += 100 * block_size / 4;
+            cycles += 100; //modified
         }
         cache.sets[currindex].slots[evicted].tag = currtag;
         cache.sets[currindex].slots[evicted].valid = 1;
@@ -173,7 +173,7 @@ uint32_t write_back_load(Cache & cache, uint32_t address, uint32_t set_num, uint
     //tag not found so a slot must be evicted
     if(lru){
         if(cache.sets[currindex].slots[evicted].dirty) { 
-            cycles += 100 * block_size / 4;
+            cycles += 100; //modified
         }
         cache.sets[currindex].slots[evicted].tag = currtag;
         cache.sets[currindex].slots[evicted].valid = 1;
@@ -197,7 +197,7 @@ uint32_t write_back_dirty_load(Cache & cache, uint32_t address, uint32_t set_num
     //tag not found so a slot must be evicted
     if(lru){
         if(cache.sets[currindex].slots[evicted].dirty) { 
-            cycles += 100 * block_size / 4;
+            cycles += 100; //modified 
         }
         cache.sets[currindex].slots[evicted].tag = currtag;
         cache.sets[currindex].slots[evicted].valid = 1;
