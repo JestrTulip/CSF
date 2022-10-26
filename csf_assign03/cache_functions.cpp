@@ -145,7 +145,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
-                cycles += 100; //modified
+                cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
         }
@@ -181,7 +181,7 @@ uint32_t write_allocate_load(Cache & cache, uint32_t address, uint32_t set_num, 
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
-                cycles += 100; //modified
+                cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
         }
@@ -216,7 +216,7 @@ uint32_t write_allocate_dirty_load(Cache & cache, uint32_t address, uint32_t set
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
-                cycles += 100; //modified
+                cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
         }
