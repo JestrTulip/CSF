@@ -71,7 +71,7 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size){
 }
 
 
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp){
+std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp){
     uint32_t storeHit = 0;
     uint32_t storeMiss = 0;
     uint32_t cycles = 0;
@@ -107,14 +107,10 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
             storeMiss++; 
             if(write_allocate){
                 if(write_through){
-                    std::tuple <Cache, uint32_t> load = write_back_load(cache, address, set_num, block_size, lru, evicted, timestamp);
+                    cycles += write_back_load(cache, address, set_num, block_size, lru, evicted, timestamp);
                     cycles+=100;
-                    cycles += std::get<1>(load);
-                    cache = std::get<0>(load);
                 } else {
-                    std::tuple <Cache, uint32_t> load = write_back_dirty_load(cache, address, set_num, block_size, lru, evicted, timestamp);
-                    cycles += std::get<1>(load);
-                    cache = std::get<0>(load);
+                    cycles += write_back_dirty_load(cache, address, set_num, block_size, lru, evicted, timestamp);
                 }
             } else {
                 cycles += 100;
@@ -122,10 +118,10 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
         }
         
     
-    return {cache, storeHit, storeMiss, cycles};
+    return {storeHit, storeMiss, cycles};
 }
 
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp){
+std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp){
     uint32_t loadHit = 0;
     uint32_t loadMiss = 0;
     uint32_t cycles = 0;
@@ -165,10 +161,10 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint3
         cycles += 100 * block_size / 4;
 
     }
-    return {cache, loadHit, loadMiss, cycles};
+    return {loadHit, loadMiss, cycles};
 }
 
-std::tuple<Cache, uint32_t> write_back_load(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp){
+uint32_t write_back_load(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp){
     uint32_t cycles = 0;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
@@ -187,12 +183,12 @@ std::tuple<Cache, uint32_t> write_back_load(Cache cache, uint32_t address, uint3
         cycles += 100 * block_size / 4;
     }
 
-    return {cache, cycles};
+    return cycles;
 }
 
 
 
-std::tuple<Cache, uint32_t> write_back_dirty_load(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp){
+uint32_t write_back_dirty_load(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp){
     uint32_t cycles = 0;
 
     uint32_t currtag = get_tag(address, set_num, block_size);
@@ -211,5 +207,5 @@ std::tuple<Cache, uint32_t> write_back_dirty_load(Cache cache, uint32_t address,
         cycles += 100 * block_size / 4;
     }
 
-    return {cache, cycles};
+    return cycles;
 }

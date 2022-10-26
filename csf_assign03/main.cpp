@@ -28,7 +28,7 @@ int main(int argc, char **argv){
 
     string line; 
 
-    std::tuple<Cache, uint32_t, uint32_t, uint32_t> stats;
+    std::tuple<uint32_t, uint32_t, uint32_t> stats;
     uint32_t load_hits = 0;
     uint32_t load_misses = 0;
     uint32_t store_hits = 0;
@@ -46,16 +46,14 @@ int main(int argc, char **argv){
         pair<string, uint64_t> args = read_line(line); 
         if (args.first[0] == 's' ) {
             stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru, timestamp);
-            cache = std::get<0>(stats);
-            store_hits += std::get<1>(stats);
-            store_misses += std::get<2>(stats);
-            cycles_total += std::get<3>(stats);
+            store_hits += std::get<0>(stats);
+            store_misses += std::get<1>(stats);
+            cycles_total += std::get<2>(stats);
         } else if (args.first[0] == 'l' ) {
             stats = load_to_cache(cache, args.second, set_num, block_size, lru, timestamp);
-            cache = std::get<0>(stats);
-            load_hits += std::get<1>(stats);
-            load_misses += std::get<2>(stats);
-            cycles_total += std::get<3>(stats);
+            load_hits += std::get<0>(stats);
+            load_misses += std::get<1>(stats);
+            cycles_total += std::get<2>(stats);
         }
         timestamp += 1;
     }
