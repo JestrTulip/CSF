@@ -36,7 +36,7 @@ int main(int argc, char **argv){
     uint32_t cycles_total = 0;
 
 
-    Cache cache = populate_cache(set_num, block_size);
+    Cache cache = populate_cache(set_num, block_num);
     uint32_t timestamp = 1;
 
     while (getline(cin, line)) {
