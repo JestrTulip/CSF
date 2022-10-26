@@ -141,6 +141,8 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
 std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp);
+std::tuple<Cache, uint32_t> write_back_load(Cache cache, uint32_t adresss, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp);
+
+std::tuple<Cache, uint32_t> write_back_dirty_load(Cache cache, uint32_t adresss, uint32_t set_num, uint32_t block_size, bool lru, uint32_t evicted, uint32_t timestamp);
 
 #endif // CACHE_FUNCTIONS_H
