@@ -107,17 +107,6 @@ uint32_t get_tag(uint32_t address, uint32_t set_num, uint32_t block_size);
 uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
 
 
-/* Function to increment all load and access times in a cache
- * 
- * Parameters:
- *  cache - cache to increment time in
- *  
- * Returns:
- *  incremented cache
- */
-Cache incrementTime(Cache cache); 
-
-
 /* Function to perform a store to cache
  * 
  * Parameters:
@@ -132,7 +121,7 @@ Cache incrementTime(Cache cache);
  * Returns:
  *  tuple containing updated cache, store hits, store misses, and cycles
  */
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru);
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp);
 
 
 /* Function to perform a load to cache
@@ -149,9 +138,9 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
  * Returns:
  *  tuple containing updated cache, load hits, load misses, and cycles
  */
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru);
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 #endif // CACHE_FUNCTIONS_H

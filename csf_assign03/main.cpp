@@ -37,6 +37,7 @@ int main(int argc, char **argv){
 
 
     Cache cache = populate_cache(set_num, block_size);
+    uint32_t timestamp = 1;
 
     while (getline(cin, line)) {
         if (line.length() == 0) { 
@@ -44,18 +45,19 @@ int main(int argc, char **argv){
         }
         pair<string, uint64_t> args = read_line(line); 
         if (args.first[0] == 's' ) {
-            stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru);
+            stats = store_to_cache(cache, args.second, set_num, block_size, write_allocate, write_through, lru, timestamp);
             cache = std::get<0>(stats);
             store_hits += std::get<1>(stats);
             store_misses += std::get<2>(stats);
             cycles_total += std::get<3>(stats);
         } else if (args.first[0] == 'l' ) {
-            stats = load_to_cache(cache, args.second, set_num, block_size, lru);
+            stats = load_to_cache(cache, args.second, set_num, block_size, lru, timestamp);
             cache = std::get<0>(stats);
             load_hits += std::get<1>(stats);
             load_misses += std::get<2>(stats);
             cycles_total += std::get<3>(stats);
         }
+        timestamp += 1;
     }
     printf("Total loads: %u\nTotal stores: %u\nLoad hits: %u\nLoad misses: %u\nStore hits: %u\nStore misses: %u\nTotal cycles: %d\n", 
     load_hits+load_misses, store_hits+store_misses, load_hits, load_misses, store_hits, store_misses, cycles_total);
