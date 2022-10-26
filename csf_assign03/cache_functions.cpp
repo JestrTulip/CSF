@@ -85,9 +85,9 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
     
     for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
         if(currtag == it->tag && it->valid){
+            storeHit = 1;
             if(write_through){
                 it->access_ts = 0;
-                    storeHit = 1;
                     cycles += 100;
             } else {
                 it->dirty = 1;
@@ -98,10 +98,18 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
         if(!storeHit){
             storeMiss++; 
             if(write_allocate){
-                std::tuple <uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
-                cycles += std::get<2>(load);
+                if(write_through){
+                    std::tuple <Cache, uint32_t, uint32_t, uint32_t> load = load_to_cache(cache, address, set_num, block_size, lru);
+                    cycles+=100;
+                    cycles += std::get<3>(load);
+                    cache = std::get<0>(load);
+                } else {
+                    std::tuple <Cache, uint32_t, uint32_t, uint32_t> load = load_dirty_to_cache(cache, address, set_num, block_size, lru);
+                    cycles += std::get<3>(load);
+                    cache = std::get<0>(load);
+                }
             } else {
-                cycles += 100 * block_size / 4;
+                cycles += 100;
             }
         }
         
@@ -149,11 +157,61 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint3
             }
             index+=1;
         }
-        if(evicted->dirty) { 
+        if(cache.sets[currindex].slots[evicted].dirty) { 
             cycles += 100 * block_size / 4;
         } //add to cycles
         cache.sets[currindex].slots[evicted].tag = currtag;
+        cache.sets[currindex].slots[evicted].valid = 1;
         cache.sets[currindex].slots[evicted].load_ts = 0;
+        cache.sets[currindex].slots[evicted].access_ts = 0;
+        cache.sets[currindex].slots[evicted].dirty = 0;
+        cycles += 100 * block_size / 4;
+
+    }
+    return {cache, loadHit, loadMiss, cycles};
+}
+
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
+    uint32_t loadHit = 0;
+    uint32_t loadMiss = 0;
+    uint32_t cycles = 0;
+
+    uint32_t index = 0;
+    uint32_t evicted = 0;
+    uint32_t maxaccess_ts = 0;
+
+    uint32_t currtag = get_tag(address, set_num, block_size);
+    uint32_t currindex = get_index(address, set_num, block_size);
+    
+    
+
+    //find the set with the correct index
+    // iterate through the slots that the set has for the right tag 
+    // if you find the tag, load hit = update access ts.
+    // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
+    // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
+
+    cache = incrementTime(cache);
+
+    //tag will not be found so a slot must be evicted
+    if(!loadHit && lru){
+        loadMiss = 1;
+        for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+            if(it->access_ts > maxaccess_ts){
+                maxaccess_ts = it->access_ts;
+                evicted = index;
+            }
+            index+=1;
+        }
+        if(cache.sets[currindex].slots[evicted].dirty) { 
+            cycles += 100 * block_size / 4;
+        } //add to cycles
+        cache.sets[currindex].slots[evicted].tag = currtag;
+        cache.sets[currindex].slots[evicted].valid = 1;
+        cache.sets[currindex].slots[evicted].load_ts = 0;
+        cache.sets[currindex].slots[evicted].access_ts = 0;
+        cache.sets[currindex].slots[evicted].dirty = 1;
+        cycles += 100 * block_size / 4;
 
     }
     return {cache, loadHit, loadMiss, cycles};
