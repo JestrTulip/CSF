@@ -16,14 +16,14 @@ int main(int argc, char **argv){
         return 0;
     }
 
-    if(!strcmp(argv[4], "no_write_allocate") && !strcmp(argv[5], "write_back")){
+    if(!strcmp(argv[4], "no-write-allocate") && !strcmp(argv[5], "write-back")){
         cerr << "Error: Invalid design parameter combination"; 
         return 0;
     }
 
 
-    bool write_allocate = !strcmp(argv[4], "write_allocate");
-    bool write_through = !strcmp(argv[5], "write_through");
+    bool write_allocate = !strcmp(argv[4], "write-allocate");
+    bool write_through = !strcmp(argv[5], "write-through");
     bool lru = !strcmp(argv[6], "lru");
 
     string line; 

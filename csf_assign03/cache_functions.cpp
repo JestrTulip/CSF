@@ -86,8 +86,8 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> store_to_cache(Cache cache, uint
     for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
         if(currtag == it->tag && it->valid){
             storeHit = 1;
+            it->access_ts = 0;
             if(write_through){
-                it->access_ts = 0;
                     cycles += 100;
             } else {
                 it->dirty = 1;
