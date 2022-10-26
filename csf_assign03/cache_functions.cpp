@@ -128,14 +128,6 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint3
 
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
-    
-    
-
-    //find the set with the correct index
-    // iterate through the slots that the set has for the right tag 
-    // if you find the tag, load hit = update access ts.
-    // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
-    // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
 
     cache = incrementTime(cache);
 
@@ -145,21 +137,20 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint3
             loadHit = 1;
             cycles += 100 * block_size / 4;
         }
+        //find slot with greatest access timestamp
+        if(it->access_ts > maxaccess_ts){
+            maxaccess_ts = it->access_ts;
+            evicted = index;
+        }
+        index+=1;
     }
 
     //tag not found so a slot must be evicted
     if(!loadHit && lru){
         loadMiss = 1;
-        for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
-            if(it->access_ts > maxaccess_ts){
-                maxaccess_ts = it->access_ts;
-                evicted = index;
-            }
-            index+=1;
-        }
         if(cache.sets[currindex].slots[evicted].dirty) { 
             cycles += 100 * block_size / 4;
-        } //add to cycles
+        }
         cache.sets[currindex].slots[evicted].tag = currtag;
         cache.sets[currindex].slots[evicted].valid = 1;
         cache.sets[currindex].slots[evicted].load_ts = 0;
@@ -171,9 +162,7 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint3
     return {cache, loadHit, loadMiss, cycles};
 }
 
-std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
-    uint32_t loadHit = 0;
-    uint32_t loadMiss = 0;
+std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_to_cache(Cache cache, uint32_t address, uint32_t set_num, uint32_t block_size, bool lru){
     uint32_t cycles = 0;
 
     uint32_t index = 0;
@@ -182,40 +171,34 @@ std::tuple<Cache, uint32_t, uint32_t, uint32_t> load_dirty_to_cache(Cache cache,
 
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
-    
-    
-
-    //find the set with the correct index
-    // iterate through the slots that the set has for the right tag 
-    // if you find the tag, load hit = update access ts.
-    // if load miss, add cycles (100 * size bytes / 4), try to add to cache by finding empty slot, else evict (set valid to true and update load ts)
-    // for lru, find the access timestamp and find the least recently used, (smallest time), mark as dirty and evict, 
 
     cache = incrementTime(cache);
 
-    //tag will not be found so a slot must be evicted
-    if(!loadHit && lru){
-        loadMiss = 1;
-        for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
-            if(it->access_ts > maxaccess_ts){
-                maxaccess_ts = it->access_ts;
-                evicted = index;
-            }
-            index+=1;
+    for (std::vector<Slot>::iterator it = cache.sets[currindex].slots.begin() ; it != cache.sets[currindex].slots.end(); ++it) {
+        //find slot with greatest access timestamp
+        if(it->access_ts > maxaccess_ts){
+            maxaccess_ts = it->access_ts;
+            evicted = index;
         }
+        index+=1;
+    }
+
+    //tag not found so a slot must be evicted
+    if(lru){
         if(cache.sets[currindex].slots[evicted].dirty) { 
             cycles += 100 * block_size / 4;
-        } //add to cycles
+        }
         cache.sets[currindex].slots[evicted].tag = currtag;
         cache.sets[currindex].slots[evicted].valid = 1;
         cache.sets[currindex].slots[evicted].load_ts = 0;
         cache.sets[currindex].slots[evicted].access_ts = 0;
-        cache.sets[currindex].slots[evicted].dirty = 1;
+        cache.sets[currindex].slots[evicted].dirty = 0;
         cycles += 100 * block_size / 4;
-
     }
-    return {cache, loadHit, loadMiss, cycles};
+    
+    return {cache, 0, 0, cycles};
 }
+
 
 Cache incrementTime(Cache cache){
     for (std::vector<Set>::iterator it = cache.sets.begin() ; it != cache.sets.end(); ++it) {
