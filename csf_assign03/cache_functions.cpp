@@ -260,7 +260,7 @@ uint32_t write_allocate_dirty_load(Cache & cache, uint32_t address, uint32_t set
         }
 
 
-        Slot insert = {0, 0, timestamp};
+        Slot insert = {1, 0, timestamp};
         cache.sets[currindex].slots.insert({currtag, insert});
         cycles += 100 * block_size / 4;
 

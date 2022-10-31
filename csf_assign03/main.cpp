@@ -12,13 +12,13 @@ int main(int argc, char **argv){
     int block_size =  stoi(argv[3]);
 
     if(check_error_conditions(argc, argv, set_num, block_num, block_size)){
-        cerr << "ERROR: Invalid cache design parameters"; 
-        return 0;
+        cerr << "ERROR: Invalid cache design parameters\n"; 
+        return 1;
     }
 
     if(!strcmp(argv[4], "no-write-allocate") && !strcmp(argv[5], "write-back")){
-        cerr << "Error: Invalid design parameter combination"; 
-        return 0;
+        cerr << "Error: Invalid design parameter combination\n"; 
+        return 1;
     }
 
 
