@@ -14,7 +14,7 @@
 /* Struct to model blocks in a cache
  * 
  * Fields:
- *  tag - tag for identifying slot in set
+ *  dirty - tag for indetifiying whether block need to by stored on eviction
  *  load_ts - time stamp measuring time since loading
  *  access_ts - time stamp measuring time since last access
  */
@@ -26,8 +26,7 @@ struct Slot {
 /* Struct to model sets in a cache
  * 
  * Fields:
- *  index - index for identifying set in cache
- *  slots - vector containing slots in the set
+ *  slots - map containing tags as keys linked to corresponding slots
  */
 struct Set {
     //possibly a map of tag to index of efficiency 
@@ -43,14 +42,13 @@ struct Cache {
     std::vector<Set> sets; 
 }; 
 
-/* Function to poulate cache with empty slots
+/* Function to poulate cache with empty sets
  * 
  * Parameters:
  *  set_num - number of sets in the cache
- *  block_num - number of slots in each set
  * 
  * Returns:
- *  Cache with certaine number of clots containing empty slots
+ *  Cache with certain number of sets
  */
 Cache populate_cache(uint32_t set_num); 
 
@@ -108,16 +106,18 @@ uint32_t get_index(uint32_t address, uint32_t set_num, uint32_t block_size);
 /* Function to perform a store to cache
  * 
  * Parameters:
- *  cache - address to derive tag from
+ *  cache - address of cache to manipulate
  *  address - address for store to occur for
  *  set_num - number of sets in the cache
+ *  block_num - number of blocks in a set
  *  block_size - size of blocks in the cache
- *  write_allocate - true if cache is write allocate, false if cache is no write allocate
+ *  write_allocate - true if cache is write-allocate, false if cache is no-write-allocate
  *  write_through - true if cache is write through, fale is cache is write back
  *  lru - true if cache is lru, false if cache is fifo
+ *  timestamp - current program time
  * 
  * Returns:
- *  tuple containing updated cache, store hits, store misses, and cycles
+ *  tuple containing updated store hits, store misses, and cycles
  */
 std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool write_allocate, bool write_through,  bool lru, uint32_t timestamp);
 
@@ -125,45 +125,49 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t 
 /* Function to perform a load to cache
  * 
  * Parameters:
- *  cache - address to derive tag from
- *  address - address for load to occur for
+ *  cache - address of cache to manipulate
+ *  address - address for store to occur for
  *  set_num - number of sets in the cache
+ *  block_num - number of blocks in a set
  *  block_size - size of blocks in the cache
  *  lru - true if cache is lru, false if cache is fifo
+ *  timestamp - current program time
  * 
  * Returns:
- *  tuple containing updated cache, load hits, load misses, and cycles
+ *  tuple containing updated load hits, load misses, and cycles
  */
 std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
-/* Function to load a slot to cache with known slot to be evicted
+/* Function to perform a load to cache for a non-dirty slot
  * 
  * Parameters:
- *  cache - address to derive tag from
- *  address - address for load to occur for
+ *  cache - address of cache to manipulate
+ *  address - address for store to occur for
  *  set_num - number of sets in the cache
+ *  block_num - number of blocks in a set
  *  block_size - size of blocks in the cache
  *  lru - true if cache is lru, false if cache is fifo
- *  evicted - slot index to be evicted
+ *  timestamp - current program time
  * 
  * Returns:
- *  tuple containing updated cache and cycles
+ *  tuple containing updated load hits, load misses, and cycles
  */
 uint32_t write_allocate_load(Cache & cache, uint32_t adresss, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 
 
-/* Function to load a dirty slot to cache with known slot to be evicted
+/* Function to perform a load to cache for a dirty slot
  * 
  * Parameters:
- *  cache - address to derive tag from
- *  address - address for load to occur for
+ *  cache - address of cache to manipulate
+ *  address - address for store to occur for
  *  set_num - number of sets in the cache
+ *  block_num - number of blocks in a set
  *  block_size - size of blocks in the cache
  *  lru - true if cache is lru, false if cache is fifo
- *  evicted - slot index to be evicted
+ *  timestamp - current program time
  * 
  * Returns:
- *  tuple containing updated cache and cycles
+ *  tuple containing updated load hits, load misses, and cycles
  */
 uint32_t write_allocate_dirty_load(Cache &cache, uint32_t address, uint32_t set_num, uint32_t block_num, uint32_t block_size, bool lru, uint32_t timestamp);
 

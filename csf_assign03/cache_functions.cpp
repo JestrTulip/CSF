@@ -17,7 +17,7 @@ int check_power_of_2(int val){
         return 0;
     }
 }
-//argc 8
+
 int check_error_conditions(int argc, char **argv, int set_num, int block_num, int block_size) { 
     return argc != 7  || !check_power_of_2(set_num) || !check_power_of_2(block_num) || !check_power_of_2(block_size) || (block_size < 4)
         || !(!strcmp(argv[4], "write-allocate") || !strcmp(argv[4], "no-write-allocate"))
@@ -39,13 +39,11 @@ Cache populate_cache(uint32_t set_num) {
 
 std::pair<std::string, std::uint64_t> read_line(std::string line) {
 
-
     std::istringstream is(line);
     std::string f_field; 
 
     std::string action; 
     std::uint64_t block; 
-    
 
     is >> f_field;  
     action = f_field; 
@@ -84,14 +82,17 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t 
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
     
-    //can get set using Set &s = cache.sets[index];
-    
+    //check if tag already exists in the slot corresponding to the calculated index
     if(!(cache.sets[currindex].slots.find(currtag)== cache.sets[currindex].slots.end())){
         storeHit = 1;
+
+        //change access time to current timestamp
         cache.sets[currindex].slots[currtag].access_ts = timestamp;
         if(write_through){
+            //increment cycles for the store directly to memory
                 cycles += 100;
         } else {
+            //mark slot as dirty so if write-back
             cache.sets[currindex].slots[currtag].dirty = 1;
         } 
     }
@@ -102,12 +103,16 @@ std::tuple<uint32_t, uint32_t, uint32_t> store_to_cache(Cache & cache, uint32_t 
             
             if(write_allocate){
                 if(write_through){
+                    //load a non-dirt slot corresponding to the address
                     cycles += write_allocate_load(cache, address, set_num, block_num, block_size, lru, timestamp);
+                    //increment cycles for the store directly to memory
                     cycles += 100;
                 } else {
+                    //load a dirty slot to correspodning to the address
                     cycles += write_allocate_dirty_load(cache, address, set_num, block_num, block_size, lru, timestamp);
                 }
             } else {
+                //increment cycles for the store directly to memory
                 cycles += 100;
             }
         }
@@ -127,8 +132,10 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
     uint32_t currtag = get_tag(address, set_num, block_size);
     uint32_t currindex = get_index(address, set_num, block_size);
 
+    //check if tag already exists in the slot corresponding to the calculated index
     if(!(cache.sets[currindex].slots.find(currtag)== cache.sets[currindex].slots.end())){
         loadHit = 1;
+        //change access time to current timestamp
         cache.sets[currindex].slots[currtag].access_ts = timestamp;
     }
 
@@ -146,14 +153,18 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
                     }
                 }
                 if(cache.sets[currindex].slots[evicted].dirty) { 
+                    //increment cycles for store of dirty block to memory
                     cycles += 100 * block_size / 4;
                 }
+
+                //remove evicted block
                 cache.sets[currindex].slots.erase(evicted);
             }
 
 
             Slot insert = {0, 0, timestamp};
             cache.sets[currindex].slots.insert({currtag, insert});
+            //increment cycles for load of block to cache
             cycles += 100 * block_size / 4;
         } else {
             if(cache.sets[currindex].slots.size() >= block_num) {
@@ -165,6 +176,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
                     }
                 }
                 if(cache.sets[currindex].slots[evicted].dirty) { 
+                    //increment cycles for store of dirty block to memory
                     cycles += 100 * block_size / 4;
                 }
                 cache.sets[currindex].slots.erase(evicted);
@@ -172,6 +184,7 @@ std::tuple<uint32_t, uint32_t, uint32_t> load_to_cache(Cache & cache, uint32_t a
 
             Slot insert = {0, timestamp, 0};
             cache.sets[currindex].slots.insert({currtag, insert});
+            //increment cycles for load of block to cache
             cycles += 100 * block_size / 4;    
         }
 
@@ -201,6 +214,7 @@ uint32_t write_allocate_load(Cache & cache, uint32_t address, uint32_t set_num, 
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
+                //increment cycles for store of dirty block to memory
                 cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
@@ -209,12 +223,13 @@ uint32_t write_allocate_load(Cache & cache, uint32_t address, uint32_t set_num, 
 
         Slot insert = {0, 0, timestamp};
         cache.sets[currindex].slots.insert({currtag, insert});
+        //increment cycles for load of block to cache
         cycles += 100 * block_size / 4;
 
     } else {
         if(cache.sets[currindex].slots.size() >= block_num) {
             for (auto it = cache.sets[currindex].slots.begin(); it != cache.sets[currindex].slots.end(); ++it) {
-                //find slot with lowest access timestamp
+                //find slot with lowest load timestamp
                 if(it->second.load_ts < min_ts){
                     min_ts = it->second.load_ts;
                     evicted = it->first;
@@ -228,6 +243,7 @@ uint32_t write_allocate_load(Cache & cache, uint32_t address, uint32_t set_num, 
 
         Slot insert = {0, timestamp, 0};
         cache.sets[currindex].slots.insert({currtag, insert});
+        //increment cycles for load of block to cache
         cycles += 100 * block_size / 4; 
     }
     return cycles;
@@ -254,6 +270,7 @@ uint32_t write_allocate_dirty_load(Cache & cache, uint32_t address, uint32_t set
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
+                //increment cycles for store of dirty block to memory
                 cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
@@ -262,18 +279,20 @@ uint32_t write_allocate_dirty_load(Cache & cache, uint32_t address, uint32_t set
 
         Slot insert = {1, 0, timestamp};
         cache.sets[currindex].slots.insert({currtag, insert});
+        //increment cycles for load of block to cache
         cycles += 100 * block_size / 4;
 
     } else {
         if(cache.sets[currindex].slots.size() >= block_num) {
             for (auto it = cache.sets[currindex].slots.begin(); it != cache.sets[currindex].slots.end(); ++it) {
-                //find slot with lowest access timestamp
+                //find slot with lowest load timestamp
                 if(it->second.load_ts < min_ts){
                     min_ts = it->second.load_ts;
                     evicted = it->first;
                 }
             }
             if(cache.sets[currindex].slots[evicted].dirty) { 
+                //increment cycles for store of dirty block to memory
                 cycles += 100 * block_size / 4;
             }
             cache.sets[currindex].slots.erase(evicted);
@@ -281,6 +300,7 @@ uint32_t write_allocate_dirty_load(Cache & cache, uint32_t address, uint32_t set
 
         Slot insert = {1, timestamp, 0};
         cache.sets[currindex].slots.insert({currtag, insert});
+        //increment cycles for load of block to cache
         cycles += 100 * block_size / 4; 
     }
     return cycles;
