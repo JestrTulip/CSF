@@ -10,12 +10,43 @@
 #include <stdlib.h>
 #include <string.h>
 
+int cmpfunc (const void * a, const void * b) {
+   return ( *(int*)a - *(int*)b );
+}
+
 void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) {
   // TODO: implement
+  size_t counter;
+  size_t midplus = mid + 1;
+  while(begin <= mid && midplus <= end){
+    if(arr[begin] < arr[midplus]){
+      temparr[counter] = arr[begin];
+      begin++;
+    } else {
+      temparr[counter] = arr[midplus];
+      midplus++;
+    }
+    counter++;
+  }
+
+  while(begin <= mid){
+    temparr[counter] = arr[begin];
+    begin++;
+    counter++;
+  }
+
+  while(midplus <= end){
+    temparr[counter] = arr[midplus];
+    midplus++;
+    counter++;
+  }
 }
 
 void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   // TODO: implement
+  if((end-begin) <= threshold){
+    qsort(arr, end-begin+1, sizeof(uint64_t), cmpfunc);
+  }
 }
 
 int main(int argc, char **argv) {
