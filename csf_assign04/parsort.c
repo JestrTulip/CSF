@@ -47,7 +47,7 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   if((end-begin) <= threshold){
     qsort(arr, end-begin+1, sizeof(uint64_t), cmpfunc);
   } else{
-
+    //check if sorted (cont do merge sort)
   }
 }
 
@@ -71,9 +71,9 @@ int main(int argc, char **argv) {
 
   // TODO: open the file
   int fd = open(filename, O_RDWR);
-
   if (fd < 0) {
-    // file couldn't be opened: handle error and exit
+    fprintf(stderr, "Error: could not open file %s\n", filename);
+    return 2; 
   }
 
 
@@ -81,7 +81,8 @@ int main(int argc, char **argv) {
   struct stat statbuf;
   int rc = fstat(fd, &statbuf);
   if (rc != 0) {
-      // handle fstat error and exit
+    fprintf(stderr, "Error: fsat could not properly get information\n");
+    return 3; 
   }
   size_t file_size_in_bytes = statbuf.st_size;
 
@@ -89,7 +90,8 @@ int main(int argc, char **argv) {
   // TODO: map the file into memory using mmap
   int64_t *data = mmap(NULL, file_size_in_bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (data == MAP_FAILED) {
-      // handle mmap error and exit
+    fprintf(stderr, "mmap faled to create new mapping\n");
+    return 4; 
   }
 
 
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
 
   // TODO: unmap and close the file
   munmap(data, file_size_in_bytes);
-  int fd = close(filename);
+  close(fd);
   
   // TODO: exit with a 0 exit code if sort was successful
   return 0;
