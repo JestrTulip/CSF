@@ -44,20 +44,39 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
 
 void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   int mid = (begin + end) / 2; 
-
   if((end-begin) <= threshold){
     qsort(arr, end-begin+1, sizeof(uint64_t), cmpfunc);
   } else{
-    //check if sorted (cont do merge sort)
     pid_t pid = fork(); 
     if (pid == -1) {
       //fork failed, handle error and exit
+      fprintf(stderr, "Error: fork failed!\n");
+      return; 
     } else if (pid == 0) {
       if (begin < end) {
         merge_sort(arr, begin, mid, threshold); 
-        merge_sort(arr, mid + 1, end, threshold);
+        exit(0);
+        //merge_sort(arr, mid + 1, end, threshold); needs to be a diff forl 
+      }
+    } else { 
+      int wstatus; 
+      pid_t actual_pid = waitpid(pid, &wstatus, 0); 
+      if (actual_pid == -1) {
+        //handle failure
       }
     }
+
+    pid = fork(); 
+    if (pid == -1) {
+      fprintf(stderr, "Error: fork failed!\n");
+      return; 
+    } else if (pid == 0) {
+      if (begin < end) {
+        merge_sort(arr, mid + 1, end, threshold); 
+        exit(0); 
+      }
+    }
+    
 
   }
 }
