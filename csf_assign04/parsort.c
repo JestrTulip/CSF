@@ -43,11 +43,22 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
 }
 
 void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
-  // TODO: implement
+  int mid = (begin + end) / 2; 
+
   if((end-begin) <= threshold){
     qsort(arr, end-begin+1, sizeof(uint64_t), cmpfunc);
   } else{
     //check if sorted (cont do merge sort)
+    pid_t pid = fork(); 
+    if (pid == -1) {
+      //fork failed, handle error and exit
+    } else if (pid == 0) {
+      if (begin < end) {
+        merge_sort(arr, begin, mid, threshold); 
+        merge_sort(arr, mid + 1, end, threshold);
+      }
+    }
+
   }
 }
 
