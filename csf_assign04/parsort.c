@@ -53,31 +53,21 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
       fprintf(stderr, "Error: fork failed!\n");
       return; 
     } else if (pid == 0) {
-      if (begin < end) {
-        merge_sort(arr, begin, mid, threshold); 
-        exit(0);
-        //merge_sort(arr, mid + 1, end, threshold); needs to be a diff forl 
-      }
+      merge_sort(arr, begin, mid, threshold); 
+      exit(0);
     } else { 
       int wstatus; 
       pid_t actual_pid = waitpid(pid, &wstatus, 0); 
       if (actual_pid == -1) {
-        //handle failure
+        if (!WIFEXITED(wstatus)) {
+            fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally!\n");
+        }
+        if (WEXITSTATUS(wstatus) != 0) {
+              fprintf(stderr, "Error: subprocess returned a non-cero error code\n");
+        }
       }
+      merge_sort(arr, mid + 1, end, threshold); 
     }
-
-    pid = fork(); 
-    if (pid == -1) {
-      fprintf(stderr, "Error: fork failed!\n");
-      return; 
-    } else if (pid == 0) {
-      if (begin < end) {
-        merge_sort(arr, mid + 1, end, threshold); 
-        exit(0); 
-      }
-    }
-    
-
   }
 }
 
@@ -120,7 +110,7 @@ int main(int argc, char **argv) {
   // TODO: map the file into memory using mmap
   int64_t *data = mmap(NULL, file_size_in_bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (data == MAP_FAILED) {
-    fprintf(stderr, "mmap faled to create new mapping\n");
+    fprintf(stderr, "Error: mmap faled to create new mapping\n");
     return 4; 
   }
 
@@ -130,8 +120,17 @@ int main(int argc, char **argv) {
 
 
   // TODO: unmap and close the file
-  munmap(data, file_size_in_bytes);
-  close(fd);
+  int status = munmap(data, file_size_in_bytes);
+  if(status != 0){
+    fprintf(stderr, "Error: munmap faled to unmap mapping\n");
+    return 5; 
+  }
+
+  status = close(fd);
+  if(status != 0){
+    fprintf(stderr, "Error: could not close file\n");
+    return 6; 
+  }
   
   // TODO: exit with a 0 exit code if sort was successful
   return 0;
