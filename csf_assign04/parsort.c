@@ -11,11 +11,11 @@
 #include <string.h>
 
 int cmpfunc (const void * a, const void * b) {
-   return ( *(int*)a - *(int*)b );
+   return ( *(int*)a - *(int*)b ); //truncation, this doesn't work (don't cast to int*, just int64*);
 }
 
 void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) {
-  // TODO: implement
+  // don't use inclusive endpoints, you wouldn't have to do mid + 1
   size_t counter;
   size_t midplus = mid + 1;
   while(begin <= mid && midplus <= end){
@@ -42,43 +42,72 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
   }
 }
 
-void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
+int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
+  //check for sorted 
   int mid = (begin + end) / 2; 
+  
+  int64_t temparr = (int64_t) malloc(begin-end); 
+  
   if((end-begin) <= threshold){
-    qsort(arr, end-begin+1, sizeof(uint64_t), cmpfunc);
+    qsort(arr, end-begin, sizeof(int64_t), cmpfunc);
   } else{
     pid_t pid = fork(); 
     if (pid == -1) {
-      //fork failed, handle error and exit
       fprintf(stderr, "Error: fork failed!\n");
-      return; 
+      return -1; 
     } else if (pid == 0) {
       if (begin < end) {
-        merge_sort(arr, begin, mid, threshold); 
-        exit(0);
+        int return_val = merge_sort(arr, begin, mid, threshold); 
+        exit(return_val);
         //merge_sort(arr, mid + 1, end, threshold); needs to be a diff forl 
       }
-    } else { 
-      int wstatus; 
-      pid_t actual_pid = waitpid(pid, &wstatus, 0); 
-      if (actual_pid == -1) {
-        //handle failure
-      }
-    }
-
+    } 
+  
     pid = fork(); 
     if (pid == -1) {
       fprintf(stderr, "Error: fork failed!\n");
-      return; 
+      return -1; 
     } else if (pid == 0) {
       if (begin < end) {
-        merge_sort(arr, mid + 1, end, threshold); 
-        exit(0); 
+        int sreturn_value = merge_sort(arr, mid + 1, end, threshold); 
+        exit(sreturn_value); 
       }
     }
-    
 
+    int wstatus; 
+    pid_t actual_pid = waitpid(pid, &wstatus, 0); 
+    if (actual_pid == -1) {
+      fprintf(stderr, "Error: waitpid failed!\n"); 
+      return -1; 
+    }
+
+    if (!WIFEXITED(wstatus)) {
+      fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally\n");
+      return -1; 
+    }
+    if (WEXITSTATUS(wstatus) != 0) {
+      fprintf(stderr, "Error: subprocess returned a non-zero exit code"); 
+      return -1; 
+    }
+
+    actual_pid = waitpid(pid, &wstatus, 0); 
+    if (actual_pid == -1) {
+      fprintf(stderr, "Error: waitpid failed!\n"); 
+      return -1; 
+    }
+
+    if (!WIFEXITED(wstatus)) {
+      fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally\n");
+      return -1; 
+    }
+    if (WEXITSTATUS(wstatus) != 0) {
+      fprintf(stderr, "Error: subprocess returned a non-zero exit code"); 
+      return -1; 
+    }
   }
+  merge(arr, begin, mid, end, &temparr); 
+  arr = &temparr; 
+  return 0; 
 }
 
 int main(int argc, char **argv) {
@@ -120,7 +149,7 @@ int main(int argc, char **argv) {
   // TODO: map the file into memory using mmap
   int64_t *data = mmap(NULL, file_size_in_bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (data == MAP_FAILED) {
-    fprintf(stderr, "mmap faled to create new mapping\n");
+    fprintf(stderr, "Error: mmap faled to create new mapping\n");
     return 4; 
   }
 
