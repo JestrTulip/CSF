@@ -72,7 +72,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   merge_sort(arr, begin, mid, threshold); 
   merge_sort(arr, mid, end, threshold); 
 
-  /**
+  
   int64_t * temparr = (int64_t *) malloc(2 * length * sizeof(int64_t)); 
 
   merge(arr, begin, mid, end, temparr); 
@@ -82,7 +82,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   }
 
   free(temparr);
-  */
+  
   return 0; 
 
 }
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 
 
   // TODO: sort the data!
-  merge_sort(data, 0, file_size_in_bytes-1, threshold);
+  merge_sort(data, 0, file_size_in_bytes / sizeof(int64_t), threshold);
 
 
   // TODO: unmap and close the file
