@@ -17,7 +17,7 @@ int cmpfunc (const void * a, const void * b) {
 
 void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) { //segfault
   // don't use inclusive endpoints, you wouldn't have to do mid + 1
-  size_t counter;
+  size_t counter = 0;
   size_t midplus = mid + 1;
   while(begin <= mid && midplus <= end){
     if(arr[begin] < arr[midplus]){
@@ -31,7 +31,7 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
   }
 
   while(begin <= mid){
-    temparr[counter] = arr[begin]; //segfault 
+    temparr[counter] = arr[begin]; //segfault
     begin++;
     counter++;
   }
@@ -47,69 +47,55 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   //check for sorted 
   int mid = (begin + end) / 2; 
 
-  int64_t length = begin - end;
+  int64_t length = begin - end + 1;
   
   int64_t temparr = (int64_t) malloc(length * sizeof(int64_t)); 
   
-  if((end-begin) <= threshold){
-    qsort(arr, end-begin, sizeof(int64_t), cmpfunc);
+  if((end-begin+1) <= threshold){
+
+    qsort(arr, end-begin+1, sizeof(int64_t), cmpfunc);
+    return 0;
+
   } else{
     pid_t pid = fork(); 
+
     if (pid == -1) {
+
       fprintf(stderr, "Error: fork failed!\n");
       return -1; 
+
     } else if (pid == 0) {
-      if (begin < end) {
-        int return_val = merge_sort(arr, begin, mid, threshold); 
-        exit(return_val);
+
+      merge_sort(arr, begin, mid, threshold); 
+      exit(0);
+
+    } else {
+
+      int wstatus; 
+      pid_t actual_pid = waitpid(pid, &wstatus, 0); 
+      if (actual_pid == -1) {
+        fprintf(stderr, "Error: waitpid failed!\n"); 
+        return -1; 
       }
-    } 
-  
-    pid = fork(); 
-    if (pid == -1) {
-      fprintf(stderr, "Error: fork failed!\n");
-      return -1; 
-    } else if (pid == 0) {
-      if (begin < end) {
-        int sreturn_value = merge_sort(arr, mid + 1, end, threshold); 
-        exit(sreturn_value); 
+
+      if (!WIFEXITED(wstatus)) {
+        fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally\n");
+        return -1; 
       }
-    }
+      if (WEXITSTATUS(wstatus) != 0) {
+        fprintf(stderr, "Error: subprocess returned a non-zero exit code"); 
+        return -1; 
+      }
 
-    int wstatus; 
-    pid_t actual_pid = waitpid(pid, &wstatus, 0); 
-    if (actual_pid == -1) {
-      fprintf(stderr, "Error: waitpid failed!\n"); 
-      return -1; 
-    }
+      merge_sort(arr, mid + 1, end, threshold); 
 
-    if (!WIFEXITED(wstatus)) {
-      fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally\n");
-      return -1; 
-    }
-    if (WEXITSTATUS(wstatus) != 0) {
-      fprintf(stderr, "Error: subprocess returned a non-zero exit code"); 
-      return -1; 
-    }
-
-    actual_pid = waitpid(pid, &wstatus, 0); 
-    if (actual_pid == -1) {
-      fprintf(stderr, "Error: waitpid failed!\n"); 
-      return -1; 
-    }
-
-    if (!WIFEXITED(wstatus)) {
-      fprintf(stderr, "Error: subprocess crashed, was interrupted, or did not exit normally\n");
-      return -1; 
-    }
-    if (WEXITSTATUS(wstatus) != 0) {
-      fprintf(stderr, "Error: subprocess returned a non-zero exit code"); 
-      return -1; 
     }
   }
+
   merge(arr, begin, mid, end, &temparr); 
   arr = &temparr; 
   return 0; 
+
 }
 
 int main(int argc, char **argv) {
@@ -157,7 +143,7 @@ int main(int argc, char **argv) {
 
 
   // TODO: sort the data!
-  merge_sort(data, 0, sizeof(data)/sizeof(uint64_t)-1, threshold);
+  merge_sort(data, 0, file_size_in_bytes-1, threshold);
 
 
   // TODO: unmap and close the file
