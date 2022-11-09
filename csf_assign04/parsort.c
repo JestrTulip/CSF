@@ -11,10 +11,11 @@
 #include <string.h>
 
 int cmpfunc (const void * a, const void * b) {
-   return ( *(int*)a - *(int*)b ); //truncation, this doesn't work (don't cast to int*, just int64*);
+  const int64_t *A = a, *B = b;
+  return (*A > *B) - (*A < *B);//truncation, this doesn't work (don't cast to int*, just int64*);
 }
 
-void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) {
+void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) { //segfault
   // don't use inclusive endpoints, you wouldn't have to do mid + 1
   size_t counter;
   size_t midplus = mid + 1;
@@ -30,7 +31,7 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
   }
 
   while(begin <= mid){
-    temparr[counter] = arr[begin];
+    temparr[counter] = arr[begin]; //segfault 
     begin++;
     counter++;
   }
@@ -48,7 +49,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
 
   int64_t length = begin - end;
   
-  int64_t temparr = malloc(length * sizeof(int64_t)); 
+  int64_t temparr = (int64_t) malloc(length * sizeof(int64_t)); 
   
   if((end-begin) <= threshold){
     qsort(arr, end-begin, sizeof(int64_t), cmpfunc);
@@ -61,7 +62,6 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
       if (begin < end) {
         int return_val = merge_sort(arr, begin, mid, threshold); 
         exit(return_val);
-        //merge_sort(arr, mid + 1, end, threshold); needs to be a diff forl 
       }
     } 
   
