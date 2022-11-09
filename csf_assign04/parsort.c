@@ -45,8 +45,10 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
 int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   //check for sorted 
   int mid = (begin + end) / 2; 
+
+  int64_t length = begin - end;
   
-  int64_t temparr = (int64_t) malloc(begin-end); 
+  int64_t temparr = malloc(length * sizeof(int64_t)); 
   
   if((end-begin) <= threshold){
     qsort(arr, end-begin, sizeof(int64_t), cmpfunc);
