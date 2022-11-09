@@ -11,68 +11,78 @@
 #include <string.h>
 
 int cmpfunc (const void * a, const void * b) {
-  const int64_t *A = a, *B = b;
-  return (*A > *B) - (*A < *B);//truncation, this doesn't work (don't cast to int*, just int64*);
+  int64_t A = *(const int64_t*) a; 
+  int64_t B = *(const int64_t*) b; 
+  
+  if (A < B) { return -1;} 
+
+  if (A > B) { return 1; }
+
+  return 0; 
+  
 }
 
 void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) { //segfault
   // don't use inclusive endpoints, you wouldn't have to do mid + 1
   size_t counter = 0;
-  size_t midplus = mid+1;
-  while(begin <= mid && midplus <= end){
-    if(arr[begin] < arr[midplus]){
-      temparr[counter] = arr[begin];
-      begin++;
+  
+  size_t second_ind = mid;
+  size_t first_ind = begin;
+
+  while(first_ind < mid && second_ind <=end){
+    if(arr[first_ind] < arr[second_ind]){
+      temparr[counter] = arr[first_ind];
+      first_ind++;
     } else {
-      temparr[counter] = arr[midplus];
-      midplus++;
+      temparr[counter] = arr[second_ind];
+      second_ind++;
     }
     counter++;
   }
 
-  while(begin <= mid){
-    temparr[counter] = arr[begin]; //segfault
-    begin++;
+  while(first_ind < mid){
+    temparr[counter] = arr[first_ind]; //segfault
+    first_ind++;
     counter++;
   }
 
-  while(midplus <= end){
-    temparr[counter] = arr[midplus];
-    midplus++;
+  while(second_ind < end){
+    temparr[counter] = arr[second_ind];
+    second_ind++;
     counter++;
   }
 }
 
 int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
-  //check for sorted 
-  //int mid = begin /2 + end / 2; 
+  
 
-  int64_t length =(end - begin) + 1;
+  int64_t length = (end - begin);
   
   /* 
   mid = begin + length/2;
   */
-  int mid = begin + length/2; 
+  int mid = begin + length / 2; 
   assert(begin < mid);
   assert(mid < end);
   
   if((length) <= threshold){
-    qsort(arr, length, sizeof(int64_t), cmpfunc);
+    qsort(arr + begin, length, sizeof(int64_t), cmpfunc);
     return 0;
-
-  } else {
-    merge_sort(arr, begin, mid, threshold); 
-
-    merge_sort(arr, mid + 1, end, threshold); 
   }
-  int64_t * temparr = (int64_t *) malloc(length * sizeof(int64_t)); 
+  merge_sort(arr, begin, mid, threshold); 
+  merge_sort(arr, mid, end, threshold); 
+
+  /**
+  int64_t * temparr = (int64_t *) malloc(2 * length * sizeof(int64_t)); 
 
   merge(arr, begin, mid, end, temparr); 
-
+  
   for(int i = 0; i < length; ++i){
     arr[i] = temparr[i];
   }
+
   free(temparr);
+  */
   return 0; 
 
 }
