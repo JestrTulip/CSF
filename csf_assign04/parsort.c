@@ -10,7 +10,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** 
+ * Function that compares tow values together 
+ * Returns negative if first value is less than second 
+ * Returns positive if second is less than first
+ * Returns 0 if equal
+**/ 
 int cmpfunc (const void * a, const void * b) {
+  
+  
   int64_t A = *(const int64_t*) a; 
   int64_t B = *(const int64_t*) b; 
   
@@ -23,12 +31,14 @@ int cmpfunc (const void * a, const void * b) {
 }
 
 void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr) { //segfault
-  // don't use inclusive endpoints, you wouldn't have to do mid + 1
+  //using inclusive endpoints 
   size_t counter = 0;
   
+
   size_t second_ind = mid;
   size_t first_ind = begin;
 
+  //while first and second half have unmerged values, iterated
   while(first_ind < mid && second_ind < end){
     if(arr[first_ind] < arr[second_ind]){
       temparr[counter] = arr[first_ind];
@@ -40,12 +50,13 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
     counter++;
   }
 
+  //while first half not sorted
   while(first_ind < mid){
-    temparr[counter] = arr[first_ind]; //segfault
+    temparr[counter] = arr[first_ind]; 
     first_ind++;
     counter++;
   }
-
+  //while second not sorted
   while(second_ind < end){
     temparr[counter] = arr[second_ind];
     second_ind++;
@@ -55,6 +66,7 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
 
 void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
+  //flag to check that errors propagate upwards 
   int prob_checker = 0; 
 
   int64_t length = (end - begin);
@@ -64,17 +76,17 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   if((length) <= threshold){
     qsort(arr + begin, length, sizeof(int64_t), cmpfunc);
     return; 
-  } else {
-    pid_t pid = fork(); 
+  } else { //greater than threshold, recursively call merge with child process
+    pid_t pid = fork(); //create first child process
     if (pid == -1) {
       fprintf(stderr, "Error: fork failed\n"); 
-      exit(-1); 
+      exit(-1); //exit with error code
     } else if(pid == 0) {
       merge_sort(arr, begin, mid, threshold); 
       exit(0);
     }
 
-    pid_t pid2 = fork(); 
+    pid_t pid2 = fork(); //create second child process
     if (pid2 == -1) {
       fprintf(stderr, "Error: fork failed\n");
       exit(-1); 
@@ -83,7 +95,7 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
       exit(0); 
     }
 
-    int wstatus; 
+    int wstatus; //wait for child process completion
     pid_t actual_pid = waitpid(pid, &wstatus, 0); 
     if (actual_pid == -1) {
       fprintf(stderr, "Error: waitpid1 failed!\n"); 
@@ -99,7 +111,7 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
       prob_checker = 1; 
     }
 
-    int w2status;
+    int w2status; //wait for child process completion
     actual_pid = waitpid(pid2, &w2status, 0); 
     if (actual_pid == -1) {
       fprintf(stderr, "Error: waitpid2 failed!\n"); 
@@ -117,21 +129,22 @@ void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
   }
 
-  if (prob_checker) {
+  if (prob_checker) { //check that no errors occured in child processes
     fprintf(stderr, "Error: child processes did not proceed properly\n"); 
     exit(-1); 
   }
   
   
-  int64_t * temparr = (int64_t *) malloc(2 * length * sizeof(int64_t)); 
+  int64_t * temparr = (int64_t *) malloc(2 * length * sizeof(int64_t)); //create temparr to hold sorted and merged array
 
-  merge(arr, begin, mid, end, temparr); 
+  merge(arr, begin, mid, end, temparr); //merge to temparr
   
-  for(int i = 0; i < length; ++i){
+  //deep copy
+  for(int i = 0; i < length; ++i){ 
     arr[i+begin] = temparr[i];
   }
 
-  free(temparr);
+  free(temparr); //free dynamically-allocated value
   
   return; 
 
@@ -155,7 +168,7 @@ int main(int argc, char **argv) {
   }
 
 
-  // TODO: open the file
+  //open the file
   int fd = open(filename, O_RDWR);
   if (fd < 0) {
     fprintf(stderr, "Error: could not open file %s\n", filename);
@@ -163,7 +176,7 @@ int main(int argc, char **argv) {
   }
 
 
-  // TODO: use fstat to determine the size of the file
+  //use fstat to determine the size of the file
   struct stat statbuf;
   int rc = fstat(fd, &statbuf);
   if (rc != 0) {
@@ -173,7 +186,7 @@ int main(int argc, char **argv) {
   size_t file_size_in_bytes = statbuf.st_size;
 
 
-  // TODO: map the file into memory using mmap
+  //map the file into memory using mmap
   int64_t *data = mmap(NULL, file_size_in_bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (data == MAP_FAILED) {
     fprintf(stderr, "Error: mmap faled to create new mapping\n");
@@ -181,11 +194,11 @@ int main(int argc, char **argv) {
   }
 
 
-  // TODO: sort the data!
+  //sort the data!
   merge_sort(data, 0, file_size_in_bytes / sizeof(int64_t), threshold); //here
 
 
-  // TODO: unmap and close the file
+  //unmap and close the file
   int status = munmap(data, file_size_in_bytes);
   if(status != 0){
     fprintf(stderr, "Error: munmap faled to unmap mapping\n");
@@ -198,7 +211,6 @@ int main(int argc, char **argv) {
     return 6; 
   }
   
-  // TODO: exit with a 0 exit code if sort was successful
   
   return 0;
 }
