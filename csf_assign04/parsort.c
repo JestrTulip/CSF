@@ -115,7 +115,6 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
   }
   
-
   
   int64_t * temparr = (int64_t *) malloc(2 * length * sizeof(int64_t)); 
 
