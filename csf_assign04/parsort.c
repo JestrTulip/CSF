@@ -29,7 +29,7 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
   size_t second_ind = mid;
   size_t first_ind = begin;
 
-  while(first_ind < mid && second_ind <=end){
+  while(first_ind < mid && second_ind < end){
     if(arr[first_ind] < arr[second_ind]){
       temparr[counter] = arr[first_ind];
       first_ind++;
@@ -57,10 +57,6 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
 
   int64_t length = (end - begin);
-  
-  /* 
-  mid = begin + length/2;
-  */
 
   int mid = begin + length / 2; 
   
@@ -68,9 +64,6 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
     qsort(arr + begin, length, sizeof(int64_t), cmpfunc);
     return 0; 
   } else {
-    merge_sort(arr, begin, mid, threshold); 
-    merge_sort(arr, mid, end, threshold); 
-    /**
     pid_t pid = fork(); 
     if (pid == -1) {
       fprintf(stderr, "Error: fork failed\n"); 
@@ -119,7 +112,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
       fprintf(stderr, "Error: subprocess2 returned a non-zero exit code\n"); 
       return -1; 
     }
-    */
+  
   }
   
 
@@ -129,7 +122,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   merge(arr, begin, mid, end, temparr); 
   
   for(int i = 0; i < length; ++i){
-    arr[i] = temparr[i];
+    arr[i+begin] = temparr[i];
   }
 
   free(temparr);
