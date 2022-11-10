@@ -53,8 +53,9 @@ void merge(int64_t *arr, size_t begin, size_t mid, size_t end, int64_t *temparr)
   }
 }
 
-int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
+void merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
+  int prob_checker = 0; 
 
   int64_t length = (end - begin);
 
@@ -62,57 +63,63 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
   
   if((length) <= threshold){
     qsort(arr + begin, length, sizeof(int64_t), cmpfunc);
-    return 0; 
+    return; 
   } else {
     pid_t pid = fork(); 
     if (pid == -1) {
       fprintf(stderr, "Error: fork failed\n"); 
-      return -1; 
+      exit(-1); 
     } else if(pid == 0) {
-      int return_val = merge_sort(arr, begin, mid, threshold); 
-      exit(return_val);
+      merge_sort(arr, begin, mid, threshold); 
+      exit(0);
     }
 
     pid_t pid2 = fork(); 
     if (pid2 == -1) {
       fprintf(stderr, "Error: fork failed\n");
+      exit(-1); 
     } else if(pid2 == 0) {
-      int sreturn_val = merge_sort(arr, mid, end, threshold); 
-      exit(sreturn_val); 
+      merge_sort(arr, mid, end, threshold); 
+      exit(0); 
     }
 
     int wstatus; 
     pid_t actual_pid = waitpid(pid, &wstatus, 0); 
     if (actual_pid == -1) {
       fprintf(stderr, "Error: waitpid1 failed!\n"); 
-      return -1; 
+      prob_checker = 1; 
     }
 
     if (!WIFEXITED(wstatus)) {
       fprintf(stderr, "Error: subprocess1 crashed, was interrupted, or did not exit normally\n");
-      return -1; 
+      prob_checker = 1; 
     }
     if (WEXITSTATUS(wstatus) != 0) {
       fprintf(stderr, "Error: subprocess1 returned a non-zero exit code\n"); 
-      return -1; 
+      prob_checker = 1; 
     }
 
     int w2status;
     actual_pid = waitpid(pid2, &w2status, 0); 
     if (actual_pid == -1) {
       fprintf(stderr, "Error: waitpid2 failed!\n"); 
-      return -1; 
+      prob_checker = 1; 
     }
 
     if (!WIFEXITED(w2status)) {
       fprintf(stderr, "Error: subprocess2 crashed, was interrupted, or did not exit normally\n");
-      return -1; 
+      prob_checker = 1; 
     }
     if (WEXITSTATUS(w2status) != 0) {
       fprintf(stderr, "Error: subprocess2 returned a non-zero exit code\n"); 
-      return -1; 
+      prob_checker = 1; 
     }
   
+  }
+
+  if (prob_checker) {
+    fprintf(stderr, "Error: child processes did not proceed properly\n"); 
+    exit(-1); 
   }
   
   
@@ -126,7 +133,7 @@ int merge_sort(int64_t *arr, size_t begin, size_t end, size_t threshold) {
 
   free(temparr);
   
-  return 0; 
+  return; 
 
 }
 
