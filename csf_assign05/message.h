@@ -50,10 +50,10 @@ struct Message {
     std::string curr_tag;
     std::string curr_message;
 
-    char * token = strtok(input, ":");
+    char * token = strtok_r(input, ":");
     if(token != NULL){ //check of existance of tag
       curr_tag = token.toString();
-      token = strtok(NULL, ":");
+      token = strtok_r(NULL, ":");
       if (token != NULL) { //check for existance of message
         curr_message = token.toString();
       }
