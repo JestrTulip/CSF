@@ -21,9 +21,8 @@ int main(int argc, char **argv) {
   Connection conn;
 
   // TODO: connect to server
-  //does buf and need to be cleared before every use?
-  int fd = open_clientfd(server_hostname.c_str(), argv[2]);
-  if (fd < 0) {
+  conn.connect(server_hostname, server_port);
+  if (!conn.is_open()) {
     fprintf(stderr, "Error: couldn't connect to server");
     return 1; 
   }
@@ -33,61 +32,56 @@ int main(int argc, char **argv) {
 
   //send and recieve login message
   Message login_message = {TAG_RLOGIN, username};
-  //check if username too long?
-  char buf[255];
-  login_message.output_message(buf);
-  rio_writen(fd, buf , login_message.message_size()); // send message to server
-  rio_t rio; 
-  rio_readinitb(&rio, fd); // read response from server
-  ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
-  Message output;
-  output.parse_message(buf);
-  if(output.tag == TAG_ERR){
-    close(fd);
-    fprintf(stderr, "Error: %s\n", output.data.c_str());
-    return 1;
-  } else {
-    output.output_message(buf);
-    printf("%s\n", buf);
+  
+  if(!conn.send(login_message)){
+    conn.close();
+    fprintf(stderr, "Error: username too long");
+    return -1;
   }
+
+  if(!conn.receive(login_message)){
+    conn.close();
+    fprintf(stderr, "Error: %s\n", login_message.data.c_str());
+    return -1;
+  }
+  login_message.print(std::cout);
+
+
 
   std::string temp;
   Message join_message;
+
+  //wait for user to type in a join line
   while(join_message.tag != TAG_JOIN){
     std::cin >> temp;
     join_message.parse_message(temp);
   }
-  //check if room name too long?
-  join_message.output_message(buf);
-  rio_writen(fd, buf , join_message.message_size()); // send message to server
-  rio_readinitb(&rio, fd); // read response from server
-  n = rio_readlineb(&rio, buf, sizeof(buf));
-  output.parse_message(buf);
-  if(output.tag == TAG_ERR){
-    close(fd);
-    fprintf(stderr, "Error: %s\n", output.data.c_str());
-    return 1;
-  } else {
-    output.output_message(buf);
-    printf("%s\n", buf);
+  if(!conn.send(join_message)){
+    conn.close();
+    fprintf(stderr, "Error: room name too long");
+    return -1;
   }
+
+  if(!conn.receive(join_message)){
+    conn.close();
+    fprintf(stderr, "Error: %s\n", join_message.data.c_str());
+    return -1;
+  }
+  join_message.print(std::cout);
 
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
   Message delivery_message;
-  while(delivery_message.data != TAG_ERR){
-    rio_readinitb(&rio, fd); // read response from server
-    char buf[255];
-    ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
+  while(delivery_message.tag != TAG_ERR){ //can be done using conn last result?
     Message delivery_message;
-    delivery_message.parse_message(buf);
+    conn.receive(delivery_message);
     if(delivery_message.tag == TAG_DELIVERY){
-      fprintf(stderr, "%s/n", output.data.c_str());
+      delivery_message.print(std::cout);
     }
   }
   
-  close(fd);
+  conn.close();
   fprintf(stderr, "Error: %s\n", delivery_message.data.c_str());
   return 1;
 

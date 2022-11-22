@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <sstream>
 #include <iostream>
 
 struct Message {
@@ -76,7 +77,7 @@ struct Message {
   }
 
 
-  bool check_valid_message(){
+  bool check_valid_message() const {
     if(message_size() > MAX_LEN){
       return false;
     } else {
@@ -84,12 +85,16 @@ struct Message {
     }
   }
 
-  void output_message(char* buf){
+  void output_message(char* buf) const {
     strcpy(buf, (tag + ":" + data + "\n").c_str()); //what if NULL message?
   }
 
-  int message_size(){
+  uint message_size() const {
     return tag.length() + data.length() + 2;
+  }
+
+  void print(std::ostream &os) const {
+    os << tag << ":" << data << std::endl;
   }
 };
 
