@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <cstring>
+#include <iostream>
 
 struct Message {
   // An encoded message may have at most this many characters,
@@ -20,69 +22,74 @@ struct Message {
     : tag(tag), data(data) { }
 
   // TODO: you could add helper functions
-  Message parse_message(std::string input){
+  void parse_message(std::string input){
 
     std::string curr_tag;
-    std::string curr_message;
+    std::string curr_data;
 
-    char * dup = strdup(input.c_str());
+    char dup[MAX_LEN];
+    strcpy(dup, input.c_str());
 
     char * token = strtok(dup, ":");
     if(token != NULL){ //check of existance of tag
-      curr_tag = token.toString();
+      curr_tag = token;
       token = strtok(NULL, ":");
       if (token != NULL) { //check for existance of message
-        curr_message = token.toString();
-      }
-      curr_message = NULL;
+        curr_data = token;
+      } else {
+        curr_data = "";
+      }  
 
     } else {
-      curr_tag = NULL;
-      curr_message = NULL;
+      curr_tag = "";
+      curr_data = "";
     }
 
-    return Message(curr_tag, curr_message);
+    tag = curr_tag;
+    data = curr_data;
 
   }
 
-  Message parse_message(char * input){
+  void parse_message(char * input){
 
     std::string curr_tag;
-    std::string curr_message;
+    std::string curr_data;
 
-    char * token = strtok_r(input, ":");
+    char * token = strtok(input, ":");
     if(token != NULL){ //check of existance of tag
-      curr_tag = token.toString();
-      token = strtok_r(NULL, ":");
+      curr_tag = token;
+      token = strtok(NULL, ":");
       if (token != NULL) { //check for existance of message
-        curr_message = token.toString();
-      }
-      curr_message = NULL;
+        curr_data = token;
+      } else {
+        curr_data = "";
+      }  
 
     } else {
-      curr_tag = NULL;
-      curr_message = NULL;
+      curr_tag = "";
+      curr_data = "";
     }
 
-    return Message(curr_tag, curr_message);
-    
+    tag = curr_tag;
+    data = curr_data;
+
   }
 
 
-  bool check_valid_message(Message message){
-    if(message_size > MAX_LEN){
+  bool check_valid_message(){
+    if(message_size() > MAX_LEN){
       return false;
     } else {
       return true;
     }
   }
 
-  std::string output_message(char* buf, Message message){
-    strcpy(buf, (tag + ":" + message + "\n").c_str()); //what if NULL message?
+  void output_message(char* buf){
+    strcpy(buf, (tag + ":" + data + "\n").c_str()); //what if NULL message?
   }
 
-  int message_size(Message message){
-    return strlen(tag) + strlen(message) + 2;
+  int message_size(){
+    return tag.length() + data.length() + 2;
   }
 };
 

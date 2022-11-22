@@ -21,8 +21,12 @@ int main(int argc, char **argv) {
   Connection conn;
 
   // TODO: connect to server
-  int fd = open_clientfd(server_hostname, server_port);
-  if (fd < 0) { fatal("Couldn't connect to server"); }
+  //does buf and need to be cleared before every use?
+  int fd = open_clientfd(server_hostname.c_str(), argv[2]);
+  if (fd < 0) {
+    fprintf(stderr, "Error: couldn't connect to server");
+    return 1; 
+  }
 
   // TODO: send rlogin and join messages (expect a response from
   //       the server for each one)
@@ -31,42 +35,41 @@ int main(int argc, char **argv) {
   Message login_message = {TAG_RLOGIN, username};
   //check if username too long?
   char buf[255];
-  message_output(buf, login_message);
-  rio_writen(fd, buf , message_size(login_message)); // send message to server
+  login_message.output_message(buf);
+  rio_writen(fd, buf , login_message.message_size()); // send message to server
   rio_t rio; 
   rio_readinitb(&rio, fd); // read response from server
-  char buf[255];
   ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
-  Message output = parse_message(buf);
+  Message output;
+  output.parse_message(buf);
   if(output.tag == TAG_ERR){
     close(fd);
-    fprintf(stderr, "Error: %s\n", output.data);
+    fprintf(stderr, "Error: %s\n", output.data.c_str());
     return 1;
   } else {
-    fprintf("%s\n", output_message(output));
+    output.output_message(buf);
+    printf("%s\n", buf);
   }
 
   std::string temp;
   Message join_message;
-  while(join_message != TAG_JOIN){
-    cin >> temp;
-    join_message = parse_message(temp);
+  while(join_message.tag != TAG_JOIN){
+    std::cin >> temp;
+    join_message.parse_message(temp);
   }
   //check if room name too long?
-  char buf[255];
-  message_output(buf, join_message;
-  rio_writen(fd, buf , message_size(join_message)); // send message to server
-  rio_t rio; 
+  join_message.output_message(buf);
+  rio_writen(fd, buf , join_message.message_size()); // send message to server
   rio_readinitb(&rio, fd); // read response from server
-  char buf[255];
-  ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
-  Message output = parse_message(buf);
+  n = rio_readlineb(&rio, buf, sizeof(buf));
+  output.parse_message(buf);
   if(output.tag == TAG_ERR){
     close(fd);
-    fprintf(stderr, "Error: %s\n", output.data);
+    fprintf(stderr, "Error: %s\n", output.data.c_str());
     return 1;
   } else {
-    fprintf("%s\n", output_message(output));
+    output.output_message(buf);
+    printf("%s\n", buf);
   }
 
 
@@ -77,15 +80,16 @@ int main(int argc, char **argv) {
     rio_readinitb(&rio, fd); // read response from server
     char buf[255];
     ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
-    Message delivery_message = parse_message(buf);
+    Message delivery_message;
+    delivery_message.parse_message(buf);
     if(delivery_message.tag == TAG_DELIVERY){
-      fprintf(stderr, "%s/n", output.data);
+      fprintf(stderr, "%s/n", output.data.c_str());
     }
-  } else {
-    close(fd);
-    fprintf(stderr, "Error: %s\n", delivery_message.data);
-    return 1;
   }
+  
+  close(fd);
+  fprintf(stderr, "Error: %s\n", delivery_message.data.c_str());
+  return 1;
 
   return 0;
 }
