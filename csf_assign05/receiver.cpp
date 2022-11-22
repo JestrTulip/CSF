@@ -36,38 +36,30 @@ int main(int argc, char **argv) {
   if(!conn.send(login_message)){
     conn.close();
     fprintf(stderr, "Error: username too long");
-    return -1;
+    return 1;
   }
 
   if(!conn.receive(login_message)){
     conn.close();
     fprintf(stderr, "Error: %s\n", login_message.data.c_str());
-    return -1;
+    return 1;
   }
-  login_message.print(std::cout);
 
 
 
-  std::string temp;
-  Message join_message;
-
-  //wait for user to type in a join line
-  while(join_message.tag != TAG_JOIN){
-    std::cin >> temp;
-    join_message.parse_message(temp);
-  }
+  Message join_message = {TAG_RLOGIN, username};
+  
   if(!conn.send(join_message)){
     conn.close();
-    fprintf(stderr, "Error: room name too long");
-    return -1;
+    fprintf(stderr, "Error: username too long");
+    return 1;
   }
 
   if(!conn.receive(join_message)){
     conn.close();
     fprintf(stderr, "Error: %s\n", join_message.data.c_str());
-    return -1;
+    return 1;
   }
-  join_message.print(std::cout);
 
 
   // TODO: loop waiting for messages from server
@@ -84,6 +76,4 @@ int main(int argc, char **argv) {
   conn.close();
   fprintf(stderr, "Error: %s\n", delivery_message.data.c_str());
   return 1;
-
-  return 0;
 }

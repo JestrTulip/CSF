@@ -23,7 +23,7 @@ struct Message {
     : tag(tag), data(data) { }
 
   // TODO: you could add helper functions
-  void parse_message(std::string input){
+  int parse_message(std::string input){
 
     std::string curr_tag;
     std::string curr_data;
@@ -42,16 +42,16 @@ struct Message {
       }  
 
     } else {
-      curr_tag = "";
-      curr_data = "";
+      return 0;
     }
 
     tag = curr_tag;
     data = curr_data;
+    return 1;
 
   }
 
-  void parse_message(char * input){
+  int parse_message(char * input){
 
     std::string curr_tag;
     std::string curr_data;
@@ -67,8 +67,7 @@ struct Message {
       }  
 
     } else {
-      curr_tag = "";
-      curr_data = "";
+      return 0;
     }
 
     tag = curr_tag;
