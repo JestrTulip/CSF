@@ -154,4 +154,10 @@ void reciever_handler(Connection * conn, std::string username, Server * server) 
       (server->find_or_create_room(join_message.data))->add_member(&reciever);
       conn->send(Message(TAG_OK, "room joined"));
   }
+  Message incoming_message;
+  while(incoming_message.tag != TAG_QUIT){
+    incoming_message = *reciever.mqueue.dequeue();
+    conn->send(incoming_message);
+  }
+  (server->find_or_create_room(join_message.data))->remove_member(&reciever);
 }
