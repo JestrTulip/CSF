@@ -72,6 +72,7 @@ struct Message {
 
     tag = curr_tag;
     data = curr_data;
+    return 1;
 
   }
 

@@ -9,8 +9,8 @@
 
 class Room;
 
-void sender_handler(Connection * conn,  std::string username);
-void reciever_handler(Connection * conn, std::string username);
+void sender_handler(Connection * conn,  std::string username, Server * server);
+void reciever_handler(Connection * conn, std::string username, Server * server);
 
 class Server {
 public:

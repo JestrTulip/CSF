@@ -25,7 +25,7 @@ void Room::remove_member(User *user) {
 
 void Room::broadcast_message(const std::string &sender_username, const std::string &message_text) {
   // TODO: send a message to every (receiver) User in the room
-  Message fromSender = {TAG_DELIVERY, message_text};
+  Message fromSender = {TAG_DELIVERY, sender_username + ":" + message_text};
   std::set<User *>::iterator it;
   for (it = members.begin(); it != members.end(); ++it) {
     //does the message have to be malloc'd

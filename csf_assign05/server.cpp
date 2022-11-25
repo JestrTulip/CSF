@@ -19,6 +19,10 @@
 
 // TODO: add any additional data types that might be helpful
 //       for implementing the Server member functions
+struct ClientInfo {
+  Server * server;
+  int clientfd;
+};
 
 ////////////////////////////////////////////////////////////////////////
 // Client thread functions
@@ -32,7 +36,8 @@ void *worker(void *arg) {
   // TODO: use a static cast to convert arg from a void* to
   //       whatever pointer type describes the object(s) needed
   //       to communicate with a client (sender or receiver)
-  Connection * conn = (Connection *) arg;
+  ClientInfo * info = (ClientInfo *) arg;
+  Connection conn(info->clientfd);
 
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
@@ -42,12 +47,12 @@ void *worker(void *arg) {
     std::string username = login_message.data;
     login_message = {TAG_OK, "Sender accepted"};
     conn->send(login_message);
-    sender_handler(conn, username);
+    sender_handler(conn, username, info->server);
   } else if (login_message.tag == TAG_RLOGIN){
     std::string username = login_message.data;
     login_message = {TAG_OK, "Reciever Accepted"};
     conn->send(login_message);
-    reciever_handler(conn, username);
+    reciever_handler(conn, username, info->server);
   } else {
     login_message = {TAG_ERR, "Invalid login message"};
     conn->send(login_message);
@@ -94,8 +99,8 @@ void Server::handle_client_requests() {
     int client_fd = Accept(m_ssock, NULL, NULL);
     if (client_fd < 0) { fprintf(stderr, "Error: could not connect to client"); }
     else {
-      Connection * info = (Connection *) malloc(sizeof(Connection));
-      new(info) Connection(client_fd);
+      ClientInfo * info = (ClientInfo *) malloc(sizeof(ClientInfo));
+      *info = {this, client_fd};
       pthread_t thr_id;
       if (pthread_create(&thr_id, NULL, worker, info) != 0) {
         fprintf(stderr, "Error: pthread_create failed");
@@ -114,21 +119,40 @@ Room *Server::find_or_create_room(const std::string &room_name) {
   } 
 
   return m_rooms[room_name];
-  
+
 }
 
-void sender_handler(Connection * conn, std::string username) {
+void sender_handler(Connection * conn, std::string username, Server * server) {
   User sender(username);
   Message join_message;
-  conn->receive(join_message);
-  if(join_message.tag == TAG_JOIN){
 
-  } else {
-    join_message = {TAG_ERR, "Invalid login message"};
-    conn->send(join_message);
+  std::string room = "";
+
+  Message incoming_message;
+  while(incoming_message.tag != TAG_QUIT){
+    conn->receive(incoming_message);
+
+    if (incoming_message.tag == TAG_JOIN){
+      room = incoming_message.data;
+      conn->send(Message(TAG_OK, "room joined"));
+
+    } else if(room == ""){
+      conn->send(Message(TAG_ERR, "no room joined"));
+
+    } else if(incoming_message.tag == TAG_LEAVE) {
+      room = "";
+
+    } else if(incoming_message.tag == TAG_SENDALL){
+      //broadcast message to all in room
+      (server->find_or_create_room(room))->broadcast_message(incoming_message.data);
+    } else if (incoming_message.tag == TAG_SENDUSER){
+      //how to send to specific user when users are private
+
+
+    }
   }
 }
 
-void reciever_handler(Connection * conn, std::string username) {
+void reciever_handler(Connection * conn, std::string username, Server * server) {
   User reciever(username);
 }
