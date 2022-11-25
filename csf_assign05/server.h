@@ -9,8 +9,6 @@
 
 class Room;
 
-void sender_handler(Connection * conn,  std::string username, Server * server);
-void reciever_handler(Connection * conn, std::string username, Server * server);
 
 class Server {
 public:
@@ -37,5 +35,8 @@ private:
   RoomMap m_rooms;
   pthread_mutex_t m_lock;
 };
+
+void sender_handler(Connection * conn,  std::string username, Server * server);
+void reciever_handler(Connection * conn, std::string username, Server * server);
 
 #endif // SERVER_H

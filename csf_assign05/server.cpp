@@ -42,20 +42,18 @@ void *worker(void *arg) {
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
   Message login_message;
-  conn->receive(login_message);
+  conn.receive(login_message);
   if(login_message.tag == TAG_SLOGIN){
     std::string username = login_message.data;
-    login_message = {TAG_OK, "Sender accepted"};
-    conn->send(login_message);
-    sender_handler(conn, username, info->server);
+    conn.send({TAG_OK, "Sender accepted"});
+    sender_handler(&conn, username, info->server);
   } else if (login_message.tag == TAG_RLOGIN){
     std::string username = login_message.data;
-    login_message = {TAG_OK, "Reciever Accepted"};
-    conn->send(login_message);
-    reciever_handler(conn, username, info->server);
+    conn.send({TAG_OK, "Sender accepted"});
+    reciever_handler(&conn, username, info->server);
   } else {
     login_message = {TAG_ERR, "Invalid login message"};
-    conn->send(login_message);
+    conn.send(login_message);
   }
 
   // TODO: depending on whether the client logged in as a sender or
@@ -123,8 +121,6 @@ Room *Server::find_or_create_room(const std::string &room_name) {
 }
 
 void sender_handler(Connection * conn, std::string username, Server * server) {
-  User sender(username);
-  Message join_message;
 
   std::string room = "";
 
@@ -144,15 +140,18 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
     } else if(incoming_message.tag == TAG_SENDALL){
       //broadcast message to all in room
-      (server->find_or_create_room(room))->broadcast_message(incoming_message.data);
-    } else if (incoming_message.tag == TAG_SENDUSER){
-      //how to send to specific user when users are private
-
-
+      (server->find_or_create_room(room))->broadcast_message(username, incoming_message.data);
+    } else {
+      conn->send(Message(TAG_ERR, "invalid tag"));
     }
   }
 }
 
 void reciever_handler(Connection * conn, std::string username, Server * server) {
   User reciever(username);
+  Message join_message;
+  if (join_message.tag == TAG_JOIN){
+      (server->find_or_create_room(join_message.data))->add_member(&reciever);
+      conn->send(Message(TAG_OK, "room joined"));
+  }
 }
