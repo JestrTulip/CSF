@@ -76,10 +76,12 @@ Server::Server(int port)
   : m_port(port)
   , m_ssock(-1) {
   // TODO: initialize mutex
+  pthread_mutex_init(&m_lock, NULL);
 }
 
 Server::~Server() {
   // TODO: destroy mutex
+  pthread_mutex_destroy(&m_lock);
 }
 
 bool Server::listen() {
@@ -110,12 +112,13 @@ void Server::handle_client_requests() {
 Room *Server::find_or_create_room(const std::string &room_name) {
   // TODO: return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
+  Guard guard(m_lock);
   if (m_rooms.find(room_name) == m_rooms.end()) {
     Room* newRoom = (Room *) malloc(sizeof(Room));
     new(newRoom) Room(room_name);
     m_rooms.insert({room_name, newRoom});
   } 
-
+  guard.~Guard();
   return m_rooms[room_name];
 
 }
