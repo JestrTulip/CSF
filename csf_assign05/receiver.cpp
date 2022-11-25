@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
 
 
-  Message join_message = {TAG_RLOGIN, username};
+  Message join_message = {TAG_JOIN, username};
   
   if(!conn.send(join_message)){
     conn.close();
