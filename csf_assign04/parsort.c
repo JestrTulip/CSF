@@ -162,7 +162,6 @@ int main(int argc, char **argv) {
   char *end;
   size_t threshold = (size_t) strtoul(argv[2], &end, 10);
   if (end != argv[2] + strlen(argv[2])) {
-    /* TODO: report an error (threshold value is invalid) */;
     fprintf(stderr, "Error: threshold value is invalid\n");
     return 1; 
   }

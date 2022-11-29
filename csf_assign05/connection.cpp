@@ -14,19 +14,17 @@ Connection::Connection()
 Connection::Connection(int fd)
   : m_fd(fd)
   , m_last_result(SUCCESS) {
-  // TODO: call rio_readinitb to initialize the rio_t object
   rio_readinitb(&m_fdbuf, m_fd);
 }
 
 void Connection::connect(const std::string &hostname, int port) {
-  // TODO: call open_clientfd to connect to the server
   m_fd = open_clientfd(hostname.c_str(), std::to_string(port).c_str());
-  // TODO: call rio_readinitb to initialize the rio_t object
   rio_readinitb(&m_fdbuf, m_fd);
 }
 
 Connection::~Connection() {
   // TODO: close the socket if it is open
+  close(); 
 }
 
 bool Connection::is_open() const {
@@ -38,6 +36,7 @@ bool Connection::is_open() const {
 void Connection::close() {
   // TODO: close the connection if it is open
   if(this->is_open()){
+    ::close(m_fd); 
   }
 }
 
@@ -51,7 +50,7 @@ bool Connection::send(const Message &msg) {
   }
   char buf[255];
   msg.output_message(buf);
-  rio_writen(m_fd, buf , msg.message_size()); 
+  rio_writen(m_fd, buf , msg.message_size()); //return #of characters in the message if success
   //how to check if send is succesful?
   return true;
 }

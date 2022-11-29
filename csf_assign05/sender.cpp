@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     } else {
       fprintf(stderr, "Error: invalid tag");
     }
-  } while(send_message.tag != TAG_ERR);
+  } while(send_message.tag != TAG_ERR); //only for quit or i/o - shouldn't end conversation
 
   conn.close();
   fprintf(stderr, "Error: %s\n", login_message.data.c_str());
