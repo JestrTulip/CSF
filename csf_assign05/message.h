@@ -25,53 +25,69 @@ struct Message {
   // TODO: you could add helper functions
   int parse_message(std::string input){
 
-    std::string curr_tag;
-    std::string curr_data;
+    std::string username;
+    std::string payload;
 
     char dup[MAX_LEN];
     strcpy(dup, input.c_str());
 
     char * token = strtok(dup, ":");
     if(token != NULL){ //check of existance of tag
-      curr_tag = token;
-      token = strtok(NULL, ":");
-      if (token != NULL) { //check for existance of message
-        curr_data = token;
+      tag = token;
+      if(tag == "delivery"){
+        token = strtok(NULL, ":");
+        token = strtok(NULL, ":");
+        username = token;
+        token = strtok(NULL, ":");
+        payload = token;
+        if(username.empty() || payload.empty()){
+          return 0;
+        }
+        data = username + ": " + payload;
       } else {
-        curr_data = "";
-      }  
-
+        token = strtok(NULL, ":");
+        data = token;
+        if(data.empty()){
+          return 0;
+        }
+      }
     } else {
       return 0;
     }
 
-    tag = curr_tag;
-    data = curr_data;
     return 1;
 
   }
 
   int parse_message(char * input){
 
-    std::string curr_tag;
-    std::string curr_data;
+    std::string username;
+    std::string payload;
 
     char * token = strtok(input, ":");
     if(token != NULL){ //check of existance of tag
-      curr_tag = token;
-      token = strtok(NULL, ":");
-      if (token != NULL) { //check for existance of message
-        curr_data = token;
+      tag = token;
+      if(tag == "delivery"){
+        token = strtok(NULL, ":");
+        token = strtok(NULL, ":");
+        username = token;
+        token = strtok(NULL, ":");
+        payload = token;
+        if(username.empty() || payload.empty()){
+          return 0;
+        }
+        data = username + ": " + payload;
       } else {
-        curr_data = "";
-      }  
-
+        token = strtok(NULL, ":");
+        data = token;
+        if(data.empty()){
+          return 0;
+        }
+      }
     } else {
       return 0;
     }
 
-    tag = curr_tag;
-    data = curr_data;
     return 1;
 
   }
