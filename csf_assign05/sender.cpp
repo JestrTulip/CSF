@@ -53,14 +53,11 @@ int main(int argc, char **argv) {
   Message send_message;
 
   //wait for user to type in a join line
-  
-  
   do{
     getline(std::cin, temp);
     temp.erase(0,1);
-    if(!send_message.parse_message(temp)){
-      fprintf(stderr, "Error: invalid message format");
-    } else if(send_message.tag == TAG_JOIN){
+    if(temp.substr(0, temp.find(" ")) == TAG_JOIN){
+        send_message = {TAG_JOIN, temp.substr(temp.find(" ")+1)};
         if(!conn.send(send_message)){
           fprintf(stderr, "Error: unable to send message");
           return 1;
@@ -69,7 +66,8 @@ int main(int argc, char **argv) {
           fprintf(stderr, "Error: server did not accept join request");
           return 1;
         }
-    } else if (send_message.tag == TAG_LEAVE) {
+    } else if (temp.substr(0, temp.find(" ")) == TAG_LEAVE) {
+      send_message = {TAG_LEAVE, temp.substr(temp.find(" ")+1)};
         if(!conn.send(send_message)){
           fprintf(stderr, "Error: unable to send message");
           return 1;
@@ -77,12 +75,19 @@ int main(int argc, char **argv) {
         if(!conn.receive(send_message)){
           fprintf(stderr, "Error: unable to leave room");
         }
-    } else if (send_message.tag == TAG_QUIT) {
+    } else if (temp.substr(0, temp.find(" ")) == TAG_QUIT) {
+      send_message = {TAG_LEAVE, temp.substr(temp.find(" ")+1)};
         conn.send(send_message);
         conn.close();
         return 0;
     } else {
-      fprintf(stderr, "Error: invalid tag");
+      send_message = {TAG_DELIVERY, temp};
+      if(!conn.send(send_message)){
+        fprintf(stderr, "Error: unable to send message");
+      }
+      if(!conn.receive(send_message)){
+        fprintf(stderr, "Error: unable to leave room");
+      }
     }
   } while(true);
 
