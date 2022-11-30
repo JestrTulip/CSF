@@ -60,9 +60,23 @@ int main(int argc, char **argv) {
     std::cin >> temp;
     if(!send_message.parse_message(temp)){
       fprintf(stderr, "Error: invalid message format");
-    } else if(send_message.tag == TAG_JOIN || send_message.tag == TAG_LEAVE){
-        conn.send(send_message);
-        conn.receive(send_message);
+    } else if(send_message.tag == TAG_JOIN){
+        if(!conn.send(send_message)){
+          fprintf(stderr, "Error: unable to send message");
+          return 1;
+        }
+        if(!conn.receive(send_message)){
+          fprintf(stderr, "Error: server did not accept join request");
+          return 1;
+        }
+    } else if (send_message.tag == TAG_LEAVE) {
+        if(!conn.send(send_message)){
+          fprintf(stderr, "Error: unable to send message");
+          return 1;
+        }
+        if(!conn.receive(send_message)){
+          fprintf(stderr, "Error: unable to leave room");
+        }
     } else if (send_message.tag == TAG_QUIT) {
         conn.send(send_message);
         conn.close();
@@ -70,10 +84,6 @@ int main(int argc, char **argv) {
     } else {
       fprintf(stderr, "Error: invalid tag");
     }
-  } while(send_message.tag != TAG_ERR); //only for quit or i/o - shouldn't end conversation
-
-  conn.close();
-  fprintf(stderr, "Error: %s\n", login_message.data.c_str());
-  return 1;
+  } while(true);
 
 }
