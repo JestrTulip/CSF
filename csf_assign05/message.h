@@ -6,6 +6,7 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include "client_util.h"
 
 struct Message {
   // An encoded message may have at most this many characters,
@@ -55,6 +56,7 @@ struct Message {
       return 0;
     }
 
+    data = trim(data);  
     return 1;
 
   }
@@ -87,7 +89,6 @@ struct Message {
     } else {
       return 0;
     }
-
     return 1;
 
   }
@@ -107,10 +108,6 @@ struct Message {
 
   uint message_size() const {
     return tag.length() + data.length() + 2;
-  }
-
-  void print(std::ostream &os) const {
-    os << tag << ":" << data << std::endl;
   }
 };
 

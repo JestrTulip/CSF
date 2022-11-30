@@ -37,6 +37,7 @@ void Connection::close() {
   // TODO: close the connection if it is open
   if(this->is_open()){
     ::close(m_fd); 
+    m_fd = -1; 
   }
 }
 
@@ -50,7 +51,10 @@ bool Connection::send(const Message &msg) {
   }
   char buf[255];
   msg.output_message(buf);
-  rio_writen(m_fd, buf , msg.message_size()); //return #of characters in the message if success
+  ssize_t len = msg.message_size();
+  if (len != rio_writen(m_fd, buf , msg.message_size())) { //do later 
+
+  }//return #of characters in the message if success
   //how to check if send is succesful?
   return true;
 }

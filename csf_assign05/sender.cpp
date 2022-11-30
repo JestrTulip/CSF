@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Error: %s\n", login_message.data.c_str());
     return 1;
   }
-  login_message.print(std::cout);
+  //login_message.print(std::cout);
 
 
 
@@ -53,11 +53,11 @@ int main(int argc, char **argv) {
   Message send_message;
 
   //wait for user to type in a join line
-  std::cin >> temp;
   
- 
+  
   do{
-    std::cin >> temp;
+    getline(std::cin, temp);
+    temp.erase(0,1);
     if(!send_message.parse_message(temp)){
       fprintf(stderr, "Error: invalid message format");
     } else if(send_message.tag == TAG_JOIN){

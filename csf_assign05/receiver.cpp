@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
   if(!conn.receive(login_message)){
     conn.close();
-    fprintf(stderr, "Error: %s\n", login_message.data.c_str());
+    fprintf(stderr, "Error: %s", login_message.data.c_str());
     return 1;
   }
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
   if(!conn.receive(join_message)){
     conn.close();
-    fprintf(stderr, "Error: %s\n", join_message.data.c_str());
+    fprintf(stderr, "Error: %s", join_message.data.c_str());
     return 1;
   }
 
@@ -65,15 +65,15 @@ int main(int argc, char **argv) {
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
   Message delivery_message;
-  while(delivery_message.tag != TAG_ERR){ //can be done using conn last result?
+  while(true){ //can be done using conn last result?
     Message delivery_message;
     conn.receive(delivery_message);
     if(delivery_message.tag == TAG_DELIVERY){
-      delivery_message.print(std::cout);
+      std::cout << delivery_message.data; 
+    } else if (delivery_message.tag == TAG_ERR){
+      std::cerr << delivery_message.data; 
     }
   }
   
-  conn.close();
-  fprintf(stderr, "Error: %s\n", delivery_message.data.c_str());
-  return 1;
+  return 0;
 }
