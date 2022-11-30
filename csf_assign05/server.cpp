@@ -142,8 +142,10 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
       room = "";
 
     } else if(incoming_message.tag == TAG_SENDALL){
+      //create broadcase message
+      std::string final_payload = room + ":" + username + ":" + incoming_message.data;
       //broadcast message to all in room
-      (server->find_or_create_room(room))->broadcast_message(username, incoming_message.data);
+      (server->find_or_create_room(room))->broadcast_message(username, final_payload);
     } else {
       conn->send(Message(TAG_ERR, "invalid tag"));
     }
