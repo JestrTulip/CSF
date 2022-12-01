@@ -69,7 +69,12 @@ bool Connection::receive(Message &msg) {
     m_last_result = INVALID_MSG;
     return false;
   }
-  msg.parse_message(buf);
+  int parse_res = msg.parse_message(buf);
+
+  if (parse_res == 2) {
+    m_last_result = INVALID_MSG; 
+    return false; 
+  }
 
   if (msg.tag == TAG_ERR){
     m_last_result = EOF_OR_ERROR;

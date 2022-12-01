@@ -21,27 +21,25 @@ int main(int argc, char **argv) {
   server_port = std::stoi(argv[2]);
   username = argv[3];
 
-  // TODO: connect to server
+
   Connection conn;
   conn.connect(server_hostname, server_port);
   if (!conn.is_open()) {
-    fprintf(stderr, "Error: couldn't connect to server");
+    fprintf(stderr, "Error: couldn't connect to server\n");
     return 1; 
   }
 
-  // TODO: send slogin message
   Message login_message = {TAG_SLOGIN, username};
   
   if(!conn.send(login_message)){
     conn.close();
     fprintf(stderr, "Error: username too long");
-    return 1;
+    exit(1);
   }
 
   if(!conn.receive(login_message)){
-    conn.close();
-    fprintf(stderr, "Error: %s\n", login_message.data.c_str());
-    return 1;
+    std::cerr << login_message.data; 
+    exit(1);
   }
   //login_message.print(std::cout);
 
@@ -54,39 +52,65 @@ int main(int argc, char **argv) {
 
   //wait for user to type in a join line
   do{
-    getline(std::cin, temp);
-    temp.erase(0,1);
-    if(temp.substr(0, temp.find(" ")) == TAG_JOIN){
+    printf("> "); 
+    getline(std::cin, temp);; 
+    //temp.erase(0,1);
+    if(temp.substr(1, temp.find(" ") - 1) == TAG_JOIN && temp[0] == '/'){
         send_message = {TAG_JOIN, temp.substr(temp.find(" ")+1)};
         if(!conn.send(send_message)){
           fprintf(stderr, "Error: unable to send message");
           return 1;
         }
         if(!conn.receive(send_message)){
-          fprintf(stderr, "Error: server did not accept join request");
-          return 1;
+          if (send_message.tag == TAG_ERR) {
+            std::cerr << send_message.data;
+          } else {
+            fprintf(stderr, "Error: server did not accept join request\n");
+            return 1;
+          }
         }
-    } else if (temp.substr(0, temp.find(" ")) == TAG_LEAVE) {
-      send_message = {TAG_LEAVE, temp.substr(temp.find(" ")+1)};
+    } else if (temp.substr(1, temp.find(" ") - 1) == TAG_LEAVE && temp[0] == '/') {
+      send_message = {TAG_LEAVE, "bye"};
         if(!conn.send(send_message)){
           fprintf(stderr, "Error: unable to send message");
           return 1;
         }
         if(!conn.receive(send_message)){
-          fprintf(stderr, "Error: unable to leave room");
+          if (send_message.tag == TAG_ERR) {
+            std::cerr << send_message.data;
+          } else {
+            fprintf(stderr, "Error: unable to leave room");
+            return 1;
+          }
         }
-    } else if (temp.substr(0, temp.find(" ")) == TAG_QUIT) {
-      send_message = {TAG_LEAVE, temp.substr(temp.find(" ")+1)};
-        conn.send(send_message);
-        conn.close();
-        return 0;
+    } else if (temp.substr(1, temp.find(" ") - 1) == TAG_QUIT && temp[0] == '/') {
+      send_message = {TAG_QUIT, "bye"};
+        if(!conn.send(send_message)){
+          fprintf(stderr, "Error: unable to send quit message");
+          return 1;
+        }
+        if(!conn.receive(send_message)){
+          if (send_message.tag == TAG_ERR) {
+            std::cerr << send_message.data;
+          } else {
+            fprintf(stderr, "Error: server did not accept quit message");
+            return 1;
+          }
+        }
+        conn.close(); 
+        return 0; 
     } else {
-      send_message = {TAG_DELIVERY, temp};
+      send_message = {TAG_SENDALL, temp};
       if(!conn.send(send_message)){
         fprintf(stderr, "Error: unable to send message");
       }
       if(!conn.receive(send_message)){
-        fprintf(stderr, "Error: unable to leave room");
+        if (send_message.tag == TAG_ERR) {
+          std::cerr << send_message.data;
+        } else {
+          fprintf(stderr, "Error: unable to process message");
+          return 1;
+        }
       }
     }
   } while(true);

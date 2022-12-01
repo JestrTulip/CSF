@@ -20,15 +20,13 @@ int main(int argc, char **argv) {
 
   Connection conn;
 
-  // TODO: connect to server
   conn.connect(server_hostname, server_port);
   if (!conn.is_open()) {
     fprintf(stderr, "Error: couldn't connect to server");
     return 1; 
   }
 
-  // TODO: send rlogin and join messages (expect a response from
-  //       the server for each one)
+
 
   //send and recieve login message
   Message login_message = {TAG_RLOGIN, username};
@@ -36,29 +34,27 @@ int main(int argc, char **argv) {
   if(!conn.send(login_message)){
     conn.close();
     fprintf(stderr, "Error: username too long");
-    return 1;
+    exit(1);
   }
 
   if(!conn.receive(login_message)){
-    conn.close();
-    fprintf(stderr, "Error: %s", login_message.data.c_str());
-    return 1;
+    std::cerr << login_message.data; 
+    exit(1);
   }
 
 
 
-  Message join_message = {TAG_JOIN, username};
+  Message join_message = {TAG_JOIN, room_name};
   
   if(!conn.send(join_message)){
     conn.close();
     fprintf(stderr, "Error: username too long");
-    return 1;
+    exit(1); 
   }
 
   if(!conn.receive(join_message)){
-    conn.close();
-    fprintf(stderr, "Error: %s", join_message.data.c_str());
-    return 1;
+    std::cerr << join_message.data; 
+    exit(1);
   }
 
 

@@ -26,6 +26,8 @@ struct Message {
   // TODO: you could add helper functions
   int parse_message(std::string input){
 
+
+
     std::string username;
     std::string payload;
 
@@ -66,6 +68,11 @@ struct Message {
     std::string username;
     std::string payload;
 
+    std::string new_input = ""; 
+    new_input = input; 
+    if (new_input.find(':') == std::string::npos) {
+      return 2; 
+    }
     char * token = strtok(input, ":");
     if(token != NULL){ //check of existance of tag
       tag = token;
