@@ -130,9 +130,11 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
   Message incoming_message;
   while(incoming_message.tag != TAG_QUIT){
     conn->receive(incoming_message);
+    /*
     if (!incoming_message.data.empty() && incoming_message.data[incoming_message.data.length()-1] == '\n') {
     incoming_message.data.erase(incoming_message.data.length()-1);
     }
+    */ 
     if (incoming_message.tag == TAG_JOIN){
       room = incoming_message.data;
       conn->send(Message(TAG_OK, "room joined"));
@@ -148,6 +150,12 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
       //create broadcase message
 
       std::string final_payload = room + ":" + username + ":" + incoming_message.data;
+      //remove all newlines from string (if any)
+      for (int i = 0; i < final_payload.length() - 1; i++) {
+        if (final_payload[i] == '\n') {
+          final_payload.erase(i, 1);
+        }
+      }
       //broadcast message to all in room
       (server->find_or_create_room(room))->broadcast_message(username, final_payload);
       conn->send(Message(TAG_OK, "message sent"));
