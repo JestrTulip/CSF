@@ -184,5 +184,6 @@ void reciever_handler(Connection * conn, std::string username, Server * server) 
       }
     }
   }
+  
   (server->find_or_create_room(join_message.data))->remove_member(&reciever);
 }
