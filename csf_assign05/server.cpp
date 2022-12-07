@@ -130,7 +130,9 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
   Message incoming_message;
   while(incoming_message.tag != TAG_QUIT){
     conn->receive(incoming_message);
-
+    if (!incoming_message.data.empty() && incoming_message.data[incoming_message.data.length()-1] == '\n') {
+    incoming_message.data.erase(incoming_message.data.length()-1);
+    }
     if (incoming_message.tag == TAG_JOIN){
       room = incoming_message.data;
       conn->send(Message(TAG_OK, "room joined"));
@@ -140,12 +142,18 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
     } else if(incoming_message.tag == TAG_LEAVE) {
       room = "";
+      conn->send(Message(TAG_OK, "room left"));
 
     } else if(incoming_message.tag == TAG_SENDALL){
       //create broadcase message
+
       std::string final_payload = room + ":" + username + ":" + incoming_message.data;
       //broadcast message to all in room
       (server->find_or_create_room(room))->broadcast_message(username, final_payload);
+      conn->send(Message(TAG_OK, "message sent"));
+    } else if (incoming_message.tag == TAG_QUIT) {
+      conn->send(Message(TAG_OK, "bye"));
+      continue;
     } else {
       conn->send(Message(TAG_ERR, "invalid tag"));
     }
@@ -154,15 +162,27 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
 void reciever_handler(Connection * conn, std::string username, Server * server) {
   User reciever(username);
+
   Message join_message;
+  conn->receive(join_message); 
   if (join_message.tag == TAG_JOIN){
       (server->find_or_create_room(join_message.data))->add_member(&reciever);
       conn->send(Message(TAG_OK, "room joined"));
   }
-  Message incoming_message;
-  while(incoming_message.tag != TAG_QUIT){
-    incoming_message = *reciever.mqueue.dequeue();
-    conn->send(incoming_message);
+  Message * incoming_message;
+  while(true){
+    //conn->receive(*incoming_message); 
+    incoming_message = reciever.mqueue.dequeue();
+    if(incoming_message != NULL){
+      if(incoming_message->tag == TAG_QUIT){
+        delete(incoming_message); 
+        break;
+      }
+      if(!conn->send(*incoming_message)){
+        delete(incoming_message); 
+        break;
+      }
+    }
   }
   (server->find_or_create_room(join_message.data))->remove_member(&reciever);
 }

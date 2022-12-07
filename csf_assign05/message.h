@@ -33,22 +33,22 @@ struct Message {
 
     char dup[MAX_LEN];
     strcpy(dup, input.c_str());
-
-    char * token = strtok(dup, ":");
+    char* count = dup; 
+    char * token = strtok_r(dup, ":", &count);
     if(token != NULL){ //check of existance of tag
       tag = token;
       if(tag == "delivery"){
-        token = strtok(NULL, ":");
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &count);
+        token = strtok_r(NULL, ":", &count);
         username = token;
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &count);
         payload = token;
         if(username.empty() || payload.empty()){
           return 0;
         }
         data = username + ": " + payload;
       } else {
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &count);
         data = token;
         if(data.empty()){
           return 0;
@@ -73,21 +73,22 @@ struct Message {
     if (new_input.find(':') == std::string::npos) {
       return 2; 
     }
-    char * token = strtok(input, ":");
+    char * dup = input; 
+    char * token = strtok_r(input, ":", &dup);
     if(token != NULL){ //check of existance of tag
       tag = token;
       if(tag == "delivery"){
-        token = strtok(NULL, ":");
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &dup);
+        token = strtok_r(NULL, ":", &dup);
         username = token;
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &dup);
         payload = token;
         if(username.empty() || payload.empty()){
           return 0;
         }
         data = username + ": " + payload;
       } else {
-        token = strtok(NULL, ":");
+        token = strtok_r(NULL, ":", &dup);
         data = token;
         if(data.empty()){
           return 0;
