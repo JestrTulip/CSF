@@ -20,7 +20,7 @@ void MessageQueue::enqueue(Message *msg) {
   Guard guard(m_lock);
   m_messages.push_back(msg);
   sem_post(&m_avail);
-  // guard.~Guard();
+  guard.~Guard();
   // be sure to notify any thread waiting for a message to be
   // available by calling sem_post
 }
