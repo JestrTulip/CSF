@@ -81,6 +81,10 @@ bool Connection::receive(Message &msg) {
     return false;
   }
 
+  if(msg.tag != TAG_LEAVE && msg.tag!=TAG_QUIT && msg.data == ""){
+    return false;
+  }
+
   return true;
 
 }
