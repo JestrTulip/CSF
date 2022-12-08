@@ -129,12 +129,16 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
   Message incoming_message;
   while(incoming_message.tag != TAG_QUIT){
-    conn->receive(incoming_message);
+
+    if(!conn->receive(incoming_message)){
+      conn->send(Message(TAG_ERR, "invalid message"));
+    };
     /*
     if (!incoming_message.data.empty() && incoming_message.data[incoming_message.data.length()-1] == '\n') {
     incoming_message.data.erase(incoming_message.data.length()-1);
     }
     */ 
+
     if (incoming_message.tag == TAG_JOIN){
       room = incoming_message.data;
       conn->send(Message(TAG_OK, "room joined"));

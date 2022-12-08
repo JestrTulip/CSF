@@ -71,7 +71,7 @@ bool Connection::receive(Message &msg) {
   }
   int parse_res = msg.parse_message(buf);
 
-  if (parse_res == 2) {
+  if (parse_res == 2 || parse_res == 0) {
     m_last_result = INVALID_MSG; 
     return false; 
   }
