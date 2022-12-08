@@ -151,9 +151,10 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
       std::string final_payload = room + ":" + username + ":" + incoming_message.data;
       //remove all newlines from string (if any)
-      size_t last_newline = final_payload.rfind('\n');
-      if (last_newline != std::string::npos) {
-        final_payload.erase(final_payload.begin(), final_payload.begin() + last_newline);
+      for (size_t i = 0; i < final_payload.length(); i++) {
+        if (final_payload[i] == '\n') {
+          final_payload.erase(i, 1);
+        }
       }
       //broadcast message to all in room
       (server->find_or_create_room(room))->broadcast_message(username, final_payload);
