@@ -25,8 +25,10 @@ struct Message {
 
   // TODO: you could add helper functions
   int parse_message(std::string input){
-
-
+  
+  if(input.length() > MAX_LEN){
+    return 0;
+  }
 
     std::string username;
     std::string payload;
@@ -64,6 +66,10 @@ struct Message {
   }
 
   int parse_message(char * input){
+
+    if(sizeof(input) > MAX_LEN){
+      return 0;
+    }
 
     std::string username;
     std::string payload;
