@@ -31,12 +31,10 @@ void Room::remove_member(User *user) {
 
 void Room::broadcast_message(const std::string &sender_username, const std::string &message_text) {
   // TODO: send a message to every (receiver) User in the room
-  Message fromSender = {TAG_DELIVERY, sender_username + ":" + message_text}; //added
   std::set<User *>::iterator it;
   Guard guard(lock);
   for (it = members.begin(); it != members.end(); ++it) {
-    //(*it)->mqueue.enqueue(new Message(TAG_DELIVERY, message_text));
-    (*it)->mqueue.enqueue(&fromSender);
+    (*it)->mqueue.enqueue(new Message(TAG_DELIVERY, message_text));
   }
   guard.~Guard();
 }
