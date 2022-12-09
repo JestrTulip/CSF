@@ -23,7 +23,6 @@ struct Message {
   Message(const std::string &tag, const std::string &data)
     : tag(tag), data(data) { }
 
-  // TODO: you could add helper functions
   int parse_message(std::string input){
   
   if(input.length() > MAX_LEN){
@@ -75,6 +74,7 @@ struct Message {
     std::string payload;
 
     std::string new_input = ""; 
+    //make sure there is a colon
     new_input = input; 
     if (new_input.find(':') == std::string::npos) {
       return 2; 

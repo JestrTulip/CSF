@@ -45,11 +45,11 @@ void *worker(void *arg) {
   conn.receive(login_message);
   if(login_message.tag == TAG_SLOGIN){
     std::string username = login_message.data;
-    conn.send({TAG_OK, "Sender accepted"});
+    conn.send({TAG_OK, "sender login accepted"});
     sender_handler(&conn, username, info->server);
   } else if (login_message.tag == TAG_RLOGIN){
     std::string username = login_message.data;
-    conn.send({TAG_OK, "Sender accepted"});
+    conn.send({TAG_OK, "receiver login accepted"});
     reciever_handler(&conn, username, info->server);
   } else {
     login_message = {TAG_ERR, "Invalid login message"};
@@ -97,13 +97,13 @@ void Server::handle_client_requests() {
   //       pthread for each connected client
   while (true) {
     int client_fd = Accept(m_ssock, NULL, NULL);
-    if (client_fd < 0) { fprintf(stderr, "Error: could not connect to client"); }
+    if (client_fd < 0) { std::cerr << "Error: could not connect to client\n"; }
     else {
       ClientInfo * info = (ClientInfo *) malloc(sizeof(ClientInfo));
       *info = {this, client_fd};
       pthread_t thr_id;
       if (pthread_create(&thr_id, NULL, worker, info) != 0) {
-        fprintf(stderr, "Error: pthread_create failed");
+        std::cerr << "Error: could not create thread\n";
       }
     }
   }
@@ -131,6 +131,7 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
     if(!conn->receive(incoming_message)){
       conn->send(Message(TAG_ERR, "invalid message"));
+      continue;
     }
     if (incoming_message.tag == TAG_JOIN){
       room = incoming_message.data;
@@ -152,6 +153,8 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
         continue;
       }
 
+      //check that string contains a colon 
+
       std::string final_payload = room + ":" + username + ":" + incoming_message.data;
       //remove all newlines from string (if any)
       for (size_t i = 0; i < final_payload.length(); i++) {
@@ -172,7 +175,11 @@ void reciever_handler(Connection * conn, std::string username, Server * server) 
   User reciever(username);
 
   Message join_message;
-  conn->receive(join_message); 
+  if (!conn->receive(join_message)) {
+    conn->send(Message(TAG_ERR, "invalid message"));
+    exit(1);
+  }
+
   if (join_message.tag == TAG_JOIN){
       (server->find_or_create_room(join_message.data))->add_member(&reciever);
       conn->send(Message(TAG_OK, "room joined"));
