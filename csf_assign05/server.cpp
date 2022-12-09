@@ -118,13 +118,12 @@ Room *Server::find_or_create_room(const std::string &room_name) {
     new(newRoom) Room(room_name);
     m_rooms.insert({room_name, newRoom});
   } 
-  guard.~Guard();
+  //guard.~Guard();
   return m_rooms[room_name];
 
 }
 
 void sender_handler(Connection * conn, std::string username, Server * server) {
-
   std::string room = "";
 
   Message incoming_message;
@@ -132,9 +131,7 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
     if(!conn->receive(incoming_message)){
       conn->send(Message(TAG_ERR, "invalid message"));
-    };
-  
-
+    }
     if (incoming_message.tag == TAG_JOIN){
       room = incoming_message.data;
       conn->send(Message(TAG_OK, "room joined"));
@@ -143,7 +140,6 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
       continue;
     } else if(room == ""){
       conn->send(Message(TAG_ERR, "no room joined"));
-
     } else if(incoming_message.tag == TAG_LEAVE) {
       room = "";
       conn->send(Message(TAG_OK, "room left"));
@@ -161,7 +157,7 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
       //broadcast message to all in room
       (server->find_or_create_room(room))->broadcast_message(username, final_payload);
       conn->send(Message(TAG_OK, "message sent"));
-    }  else {
+    } else {
       conn->send(Message(TAG_ERR, "invalid tag"));
     }
   }
