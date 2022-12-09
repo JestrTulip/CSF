@@ -146,6 +146,11 @@ void sender_handler(Connection * conn, std::string username, Server * server) {
 
     } else if(incoming_message.tag == TAG_SENDALL){
       //create broadcase message
+      //check that message length is less than MAXLEN
+      if (incoming_message.data.length() >= Message::MAX_LEN) {
+        conn->send(Message(TAG_ERR, "message too long"));
+        continue;
+      }
 
       std::string final_payload = room + ":" + username + ":" + incoming_message.data;
       //remove all newlines from string (if any)
