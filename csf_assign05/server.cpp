@@ -175,11 +175,9 @@ void reciever_handler(Connection * conn, std::string username, Server * server) 
   User reciever(username);
 
   Message join_message;
-  if (!conn->receive(join_message)) {
+  if(!conn->receive(join_message)){
     conn->send(Message(TAG_ERR, "invalid message"));
-    exit(1);
   }
-
   if (join_message.tag == TAG_JOIN){
       (server->find_or_create_room(join_message.data))->add_member(&reciever);
       conn->send(Message(TAG_OK, "room joined"));
