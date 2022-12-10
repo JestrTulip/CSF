@@ -29,3 +29,4 @@ we identified all the functions were these shared objects were accessed:
  is momentarally put to sleep until a message is added, the semaphore is incremented, and the reciever
  thread is alerted and can access and remove a message from the queue (after using the mutex to lock the
  message queue naturally).
+ 
