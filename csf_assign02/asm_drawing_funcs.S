@@ -39,7 +39,7 @@ in_bounds:
 	 * %r13d - image height
 	 * %eax - 0 or 1
 	 */
-	subq $8, %rsp /*align stack pointer for procedure calls*/
+	subq $8, %rsp /*align stack pointer for procedure calls TODO: try "and $rsp, -8"*/ 
 
 	/*push r12 and r13 to preserve values*/
 	pushq %r12
